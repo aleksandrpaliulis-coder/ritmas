@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=20260917-130630">
+<link rel="stylesheet" href="app.css?v=20260917-131242">
 </head>
 <body>
 <div class="shell">
@@ -253,15 +253,22 @@
   </div>
 </dialog>
 
-<script>window.APP_BUILD = "20260917-130630";</script>
-<script src="app.js?v=20260917-130630"></script>
+<script>window.APP_BUILD = "20260917-131242";</script>
+<script src="app.js?v=20260917-131242"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("sw.js").then(function (reg) {
         // naujas service worker perima valdyma -> puslapis persikrauna su naujais failais
         navigator.serviceWorker.addEventListener("controllerchange", function () {
-          if (!window.__ritmasReloading) { window.__ritmasReloading = true; window.location.reload(); }
+          if (window.__ritmasReloading) return;
+          try {
+            var k = "paros-ritmas:swreload";
+            if (Date.now() - (+sessionStorage.getItem(k) || 0) < 120000) return;
+            sessionStorage.setItem(k, String(Date.now()));
+          } catch (e) { return; }
+          window.__ritmasReloading = true;
+          window.location.reload();
         });
         setInterval(function () { reg.update(); }, 60000);
         document.addEventListener("visibilitychange", function () {

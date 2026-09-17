@@ -1233,24 +1233,19 @@
 
   (function fitViewport() {
     var root = document.documentElement;
-    var shell = document.querySelector(".shell");
     var vv = window.visualViewport;
-    var lastH = 0, lastOff = -1, queued = false;
+    var lastH = 0, queued = false;
 
-    /* Naujas aukstis rasomas tik tada, kai jis tikrai pasikeite: kitaip issidestymas
-       ir matomo lango matavimas ima keisti vienas kita ratu, o ekranas mirksi. */
+    /* Cia liecia TIK remo auksti. Nesikisam i nieka, ka tvarko pati narsykle:
+       nei i lango slinkti, nei i remo pozicija. Buves `window.scrollTo(0, 0)`
+       kovodavo su iOS, kuri tuo pat metu stumia langa prie fokusuoto lauko,
+       ir tas abipusis stumdymasis ir buvo mirgejimas. */
     function apply() {
       var h = Math.round(vv ? vv.height : window.innerHeight);
-      if (h && Math.abs(h - lastH) >= 2) {
+      if (h && Math.abs(h - lastH) >= 8) {
         lastH = h;
         root.style.setProperty("--app-h", h + "px");
       }
-      var off = vv ? Math.round(vv.offsetTop) : 0;
-      if (shell && off !== lastOff) {
-        lastOff = off;
-        shell.style.transform = "translateX(-50%) translateY(" + off + "px)";
-      }
-      if (window.scrollY || window.pageYOffset) window.scrollTo(0, 0);
     }
 
     function schedule() {
@@ -1260,26 +1255,11 @@
     }
 
     apply();
-    if (vv) {
-      vv.addEventListener("resize", schedule);
-      vv.addEventListener("scroll", schedule);
-    }
+    /* tik `resize`: `scroll` yra butent tas ivykis, kuri iOS kelia stumdydama
+       langa, ir atsakymas i ji sukuria begalini rata */
+    if (vv) vv.addEventListener("resize", schedule);
     window.addEventListener("resize", schedule);
     window.addEventListener("orientationchange", function () { setTimeout(apply, 250); });
-
-    document.addEventListener("focusin", function (e) {
-      var el = e.target;
-      if (!el || !el.matches || !el.matches("input, textarea, select")) return;
-      setTimeout(function () {
-        apply();
-        if (!el.getBoundingClientRect || !el.scrollIntoView) return;
-        var r = el.getBoundingClientRect();
-        var vh = vv ? vv.height : window.innerHeight;
-        /* keliam tik tada, kai laukas tikrai uzstotas */
-        if (r.bottom > vh - 12 || r.top < 12) el.scrollIntoView({ block: "center" });
-      }, 320);
-    });
-    document.addEventListener("focusout", function () { setTimeout(apply, 320); });
   })();
 
   /* ---------- savaiminis atsinaujinimas ----------
@@ -1289,6 +1269,7 @@
   (function autoUpdate() {
     if (inArtifact) return;
     var pending = false;
+    var RELOAD_KEY = LS + "reloaded";
 
     function busy() {
       var a = document.activeElement;
@@ -1296,8 +1277,15 @@
       return !!document.querySelector("dialog[open]");
     }
 
+    /* Apsauga nuo perkrovimo rato: jei serveryje esanti versija del kokios nors
+       priezasties niekaip nesutampa su ikrauta, programele bandytu krautis be galo. */
     function reloadNow() {
       if (busy()) { pending = true; return; }
+      try {
+        var last = +sessionStorage.getItem(RELOAD_KEY) || 0;
+        if (Date.now() - last < 120000) return;
+        sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+      } catch (e) { /* be sessionStorage geriau nesikrauti is naujo */ return; }
       window.location.reload();
     }
 
