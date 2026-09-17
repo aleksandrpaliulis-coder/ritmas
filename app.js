@@ -656,6 +656,16 @@
     renderRoutines(); renderHabits(); renderOverview();
   }
 
+  /* Perpiesiam tik antraste ir matoma skirtuka: nematomu daliu perpiesimas
+     telefone brangus ir sukelia mirgejima. */
+  function refresh() {
+    renderHeader();
+    if (state.tab === "diena") { renderNow(); renderTimeline(); renderHealth(); }
+    else if (state.tab === "rutinos") renderRoutines();
+    else if (state.tab === "iprociai") renderHabits();
+    else renderOverview();
+  }
+
   /* ---------- saveika: skirtukai ir dienos ---------- */
 
   Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (btn) {
@@ -702,7 +712,7 @@
           if (blk && blk.habit) state.day.habits[blk.habit] = true;
         }
       }
-      save("day"); renderHeader(); renderTimeline(); renderHabits(); renderOverview();
+      save("day"); refresh();
       return;
     }
     var t = e.target.closest("[data-row]");
@@ -721,7 +731,7 @@
       var val = field ? field.value.trim() : "";
       if (val) state.day.notes[nid] = val; else delete state.day.notes[nid];
       state.openNote = null;
-      save("day"); renderNow(); renderTimeline();
+      save("day"); refresh();
       return;
     }
     var del = e.target.closest("[data-del-task]");
@@ -730,7 +740,7 @@
       state.day.tasks = state.day.tasks.filter(function (x) { return x.id !== did; });
       delete state.day.notes[did];
       state.openNote = null;
-      save("day"); renderHeader(); renderNow(); renderTimeline(); renderOverview();
+      save("day"); refresh();
       return;
     }
     if (e.target.closest("[data-cancel-note]")) { state.openNote = null; renderTimeline(); }
@@ -745,7 +755,7 @@
     var start = startEl.value || hhmm(Math.ceil(nowMins() / 15) * 15);
     state.day.tasks.push({ id: uid(), text: val, start: start, dur: +durEl.value || 30, done: false });
     text.value = "";
-    save("day"); renderHeader(); renderNow(); renderTimeline(); renderOverview();
+    save("day"); refresh();
   }
   document.getElementById("addTask").addEventListener("click", addTask);
   document.getElementById("taskText").addEventListener("keydown", function (e) {
@@ -759,22 +769,22 @@
     if (!b) return;
     var v = +b.getAttribute("data-water");
     state.day.health.water = (state.day.health.water === v) ? v - 1 : v;
-    save("day"); renderHealth(); renderHeader();
+    save("day"); refresh();
   });
   document.getElementById("moodScale").addEventListener("click", function (e) {
     var b = e.target.closest("[data-mood]");
     if (!b) return;
     var v = +b.getAttribute("data-mood");
     state.day.health.mood = (state.day.health.mood === v) ? 0 : v;
-    save("day"); renderHealth(); renderOverview();
+    save("day"); refresh();
   });
   document.getElementById("sleepPlus").addEventListener("click", function () {
     state.day.health.sleep = Math.min(14, (state.day.health.sleep || 6.5) + 0.5);
-    save("day"); renderHealth(); renderOverview();
+    save("day"); refresh();
   });
   document.getElementById("sleepMinus").addEventListener("click", function () {
     state.day.health.sleep = Math.max(0, (state.day.health.sleep || 7) - 0.5);
-    save("day"); renderHealth(); renderOverview();
+    save("day"); refresh();
   });
 
   /* ---------- saveika: iprociai ---------- */
@@ -785,7 +795,7 @@
       var id = t.getAttribute("data-toggle-habit");
       if (state.day.habits[id]) delete state.day.habits[id]; else state.day.habits[id] = true;
       syncBlocks(id);
-      save("day"); renderHeader(); renderHabits(); renderTimeline(); renderOverview();
+      save("day"); refresh();
       return;
     }
     var cell = e.target.closest("[data-habit-day]");
@@ -802,7 +812,7 @@
         lsSet("day:" + dIso, target);
         if (db) db.doc("days/" + dIso).set(Object.assign({ date: dIso, updated: new Date().toISOString() }, target))["catch"](function () {});
       }
-      renderHeader(); renderHabits(); renderTimeline(); renderOverview();
+      refresh();
     }
   });
 
@@ -842,7 +852,7 @@
     if (s) {
       var parts = s.getAttribute("data-step").split("|");
       toggleStep(parts[0], parts[1]);
-      renderHeader(); renderRoutines(); renderHabits(); renderTimeline(); renderOverview();
+      refresh();
       return;
     }
     var st = e.target.closest("[data-start]");
@@ -927,7 +937,7 @@
     if (next === -1) {
       for (var j = 0; j < r.steps.length; j++) { if (!marks[r.steps[j].id]) { next = j; break; } }
     }
-    renderHeader(); renderRoutines(); renderHabits(); renderTimeline(); renderOverview();
+    refresh();
     if (next === -1) { closeFocus(); return; }
     focus.index = next;
     loadStep();
@@ -1225,23 +1235,36 @@
     var root = document.documentElement;
     var shell = document.querySelector(".shell");
     var vv = window.visualViewport;
+    var lastH = 0, lastOff = -1, queued = false;
 
+    /* Naujas aukstis rasomas tik tada, kai jis tikrai pasikeite: kitaip issidestymas
+       ir matomo lango matavimas ima keisti vienas kita ratu, o ekranas mirksi. */
     function apply() {
-      var h = vv ? vv.height : window.innerHeight;
-      if (h) root.style.setProperty("--app-h", Math.round(h) + "px");
-      if (shell) {
-        var off = vv ? Math.round(vv.offsetTop) : 0;
+      var h = Math.round(vv ? vv.height : window.innerHeight);
+      if (h && Math.abs(h - lastH) >= 2) {
+        lastH = h;
+        root.style.setProperty("--app-h", h + "px");
+      }
+      var off = vv ? Math.round(vv.offsetTop) : 0;
+      if (shell && off !== lastOff) {
+        lastOff = off;
         shell.style.transform = "translateX(-50%) translateY(" + off + "px)";
       }
       if (window.scrollY || window.pageYOffset) window.scrollTo(0, 0);
     }
 
+    function schedule() {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; apply(); });
+    }
+
     apply();
     if (vv) {
-      vv.addEventListener("resize", apply);
-      vv.addEventListener("scroll", apply);
+      vv.addEventListener("resize", schedule);
+      vv.addEventListener("scroll", schedule);
     }
-    window.addEventListener("resize", apply);
+    window.addEventListener("resize", schedule);
     window.addEventListener("orientationchange", function () { setTimeout(apply, 250); });
 
     document.addEventListener("focusin", function (e) {
@@ -1249,7 +1272,11 @@
       if (!el || !el.matches || !el.matches("input, textarea, select")) return;
       setTimeout(function () {
         apply();
-        if (el.scrollIntoView) el.scrollIntoView({ block: "center" });
+        if (!el.getBoundingClientRect || !el.scrollIntoView) return;
+        var r = el.getBoundingClientRect();
+        var vh = vv ? vv.height : window.innerHeight;
+        /* keliam tik tada, kai laukas tikrai uzstotas */
+        if (r.bottom > vh - 12 || r.top < 12) el.scrollIntoView({ block: "center" });
       }, 320);
     });
     document.addEventListener("focusout", function () { setTimeout(apply, 320); });
