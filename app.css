@@ -100,8 +100,11 @@
 
 /* Iprastas slenkantis dokumentas: jokiu prie ekrano prisegtu elementu, tad iOS
    klaviaturai nera ko stumdyti. Antraste ir skirtukai laikosi vietoje per sticky. */
-html { height: auto; }
-body { min-height: 100%; }
+html { height: auto; overflow-x: hidden; }
+body { min-height: 100%; width: 100%; }
+/* Pirstais vaizdo nebeprazoominsi ir nebenutempsi i sonus: leidziama tik vertikali
+   slinktis. Be sito iOS priartintas vaizdas leidzia tempti turini uz ekrano ribu. */
+html, body { touch-action: pan-y; }
 /* saugios zonos tvarkomos pacioje antrasteje ir skirtuku juostoje, ne cia:
    kitaip klaviaturai atsidarius remo aukstis nebesutaptu su matoma ekrano dalimi */
 :root { padding-top: 0; padding-bottom: 0; }
@@ -124,7 +127,7 @@ button { cursor: pointer; touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 .shell {
-  max-width: 620px; margin: 0 auto;
+  max-width: 620px; margin: 0 auto; width: 100%; overflow-x: hidden;
   min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column;
 }
