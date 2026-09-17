@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paros ritmas</title>
+<meta name="description" content="Paros tvarkaraštis, įpročių serijos ir produktyvumo apžvalga.">
+<meta name="theme-color" content="#edf0f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d131a" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ritmas">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-64.png" sizes="64x64" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="top-row">
+      <div class="ring" id="dayRing">
+        <svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true">
+          <circle cx="27" cy="27" r="23" fill="none" stroke="var(--line-soft)" stroke-width="5"></circle>
+          <circle id="ringArc" cx="27" cy="27" r="23" fill="none" stroke="var(--accent)" stroke-width="5"
+                  stroke-linecap="round" stroke-dasharray="144.5" stroke-dashoffset="144.5"></circle>
+        </svg>
+        <div class="ring-val" id="ringVal">0%</div>
+      </div>
+      <div class="date-block">
+        <div class="weekday" id="weekday">Trečiadienis</div>
+        <div class="datestamp" id="datestamp">2026-09-17</div>
+      </div>
+      <button class="iconbtn" id="openMenu" title="Nustatymai" aria-label="Nustatymai">⚙</button>
+    </div>
+    <div class="weekstrip" id="weekstrip"></div>
+  </header>
+
+  <main>
+    <section class="panel" id="panel-diena">
+      <div class="now idle" id="nowCard">
+        <div class="now-label" id="nowLabel">Dabar</div>
+        <div class="now-title" id="nowTitle">—</div>
+        <div class="now-sub" id="nowSub"></div>
+        <div class="now-note" id="nowNote"></div>
+      </div>
+      <h2 class="section-title">Paros juosta <span class="st-note" id="blocksDone"></span></h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <section class="panel" id="panel-iprociai" hidden>
+      <h2 class="section-title">Šios dienos įpročiai <span class="st-note" id="habitsDone"></span></h2>
+      <div id="habitList"></div>
+      <button class="btn ghost small wide" id="openHabits">Tvarkyti įpročius</button>
+    </section>
+
+    <section class="panel" id="panel-apzvalga" hidden>
+      <h2 class="section-title">Produktyvumas</h2>
+      <div class="tiles">
+        <div class="tile"><div class="tile-v" id="statAvg">–</div><div class="tile-l">7 dienų vidurkis</div></div>
+        <div class="tile"><div class="tile-v" id="statStreak">0</div><div class="tile-l" id="statStreakLabel">Ilgiausia serija</div></div>
+        <div class="tile"><div class="tile-v" id="statWeek">0</div><div class="tile-l">Šios savaitės pilnos dienos</div></div>
+      </div>
+
+      <h2 class="section-title">Savaitė <span class="st-note" id="weekRange"></span></h2>
+      <div class="bars" id="weekBars"></div>
+
+      <h2 class="section-title">Penkios savaitės</h2>
+      <div class="heat" id="heatHead"></div>
+      <div class="heat" id="heat" style="margin-top:5px"></div>
+      <div class="legend">
+        <span>mažiau</span>
+        <span class="sw" style="background:var(--surface-2);border:1px solid var(--line-soft)"></span>
+        <span class="sw" style="background:color-mix(in srgb, var(--accent) 18%, var(--surface))"></span>
+        <span class="sw" style="background:color-mix(in srgb, var(--accent) 42%, var(--surface))"></span>
+        <span class="sw" style="background:color-mix(in srgb, var(--accent) 70%, var(--surface))"></span>
+        <span class="sw" style="background:var(--accent)"></span>
+        <span>daugiau</span>
+      </div>
+
+      <h2 class="section-title">Vakaro įrašas</h2>
+      <div class="qcard">
+        <span class="qlabel">Kaip nuėjo diena?</span>
+        <div class="rate" id="rate">
+          <button type="button" data-v="1" aria-pressed="false">1</button>
+          <button type="button" data-v="2" aria-pressed="false">2</button>
+          <button type="button" data-v="3" aria-pressed="false">3</button>
+          <button type="button" data-v="4" aria-pressed="false">4</button>
+          <button type="button" data-v="5" aria-pressed="false">5</button>
+        </div>
+      </div>
+      <div class="qcard">
+        <label class="qlabel" for="q1">Kas pavyko
+          <span class="qhint">Vienas dalykas, kurį verta pakartoti</span>
+        </label>
+        <textarea id="q1" placeholder="pvz. salė po darbo, nors nesinorėjo"></textarea>
+      </div>
+      <div class="qcard">
+        <label class="qlabel" for="q2">Ką taisau rytoj
+          <span class="qhint">Kas sutrukdė laikytis ritmo</span>
+        </label>
+        <textarea id="q2" placeholder="pvz. telefonas prieš miegą, gulti 23:00"></textarea>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <div class="tabs-inner" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="diena"><span class="ti" aria-hidden="true">◷</span>Diena</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="iprociai"><span class="ti" aria-hidden="true">✓</span>Įpročiai</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="apzvalga"><span class="ti" aria-hidden="true">▤</span>Apžvalga</button>
+    </div>
+  </nav>
+</div>
+
+<dialog id="blocksDlg">
+  <div class="dlg-head">
+    <h3>Paros blokai</h3>
+    <button class="iconbtn" id="closeBlocks" aria-label="Uždaryti">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div id="blockRows"></div>
+    <div class="dlg-actions">
+      <button class="btn ghost small" id="addBlock">+ Blokas</button>
+      <button class="btn ghost small" id="resetBlocks">Grąžinti pradinį</button>
+      <button class="btn small" id="saveBlocks">Išsaugoti</button>
+    </div>
+    <p class="note" id="storageNote">Blokai galioja visoms dienoms. Pažymėjimai ir įrašai saugomi kiekvienai dienai atskirai.</p>
+
+    <h2 class="section-title">Atsarginė kopija</h2>
+    <div class="backup">
+      <div class="dlg-actions" style="margin-top:0">
+        <button class="btn ghost small" id="exportData">Padaryti kopiją</button>
+        <button class="btn ghost small" id="importData">Įkelti kopiją</button>
+      </div>
+      <textarea id="backupBox" placeholder="Kopijos tekstas atsiras čia. Įkėlimui įklijuok anksčiau išsaugotą tekstą." aria-label="Atsarginės kopijos tekstas"></textarea>
+      <div class="msg" id="backupMsg"></div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="habitsDlg">
+  <div class="dlg-head">
+    <h3>Įpročiai</h3>
+    <button class="iconbtn" id="closeHabits" aria-label="Uždaryti">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="hhead"><span>Pavadinimas</span><span>Ritmas</span><span>Per sav.</span><span></span></div>
+    <div id="habitRows"></div>
+    <div class="dlg-actions">
+      <button class="btn ghost small" id="addHabit">+ Įprotis</button>
+      <button class="btn small" id="saveHabits">Išsaugoti</button>
+    </div>
+    <p class="note">Kasdienis įprotis skaičiuoja seriją dienomis. Savaitinis skaičiuoja seriją savaitėmis: serija auga, kai per savaitę surenki normą, tad vienas praleistas vakaras jos nenutraukia.</p>
+  </div>
+</dialog>
+
+<script src="app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () { /* be sw programele vis tiek veikia */ });
+    });
+  }
+</script>
+</body>
+</html>
