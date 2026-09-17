@@ -765,6 +765,40 @@
     renderAll();
   });
 
+  /* ---------- ekrano remas ----------
+     iOS klaviatura sumazina matoma lango dali ir pati pastumia puslapi.
+     Remo auksti imam is visualViewport, tad antraste ir skirtukai lieka vietoje,
+     o fokusuotas laukas pakeliamas virs klaviaturos. */
+
+  (function fitViewport() {
+    var root = document.documentElement;
+    var vv = window.visualViewport;
+
+    function apply() {
+      var h = vv ? vv.height : window.innerHeight;
+      if (h) root.style.setProperty("--app-h", Math.round(h) + "px");
+      if (window.scrollY || window.pageYOffset) window.scrollTo(0, 0);
+    }
+
+    apply();
+    if (vv) {
+      vv.addEventListener("resize", apply);
+      vv.addEventListener("scroll", apply);
+    }
+    window.addEventListener("resize", apply);
+    window.addEventListener("orientationchange", function () { setTimeout(apply, 250); });
+
+    document.addEventListener("focusin", function (e) {
+      var el = e.target;
+      if (!el || !el.matches || !el.matches("input, textarea")) return;
+      setTimeout(function () {
+        apply();
+        if (el.scrollIntoView) el.scrollIntoView({ block: "center" });
+      }, 320);
+    });
+    document.addEventListener("focusout", function () { setTimeout(apply, 320); });
+  })();
+
   /* ---------- startas ---------- */
 
   loadLocal();
