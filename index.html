@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=20260917-164508">
+<link rel="stylesheet" href="app.css?v=20260917-165225">
 </head>
 <body>
 <div class="shell">
@@ -206,6 +206,17 @@
         </select>
       </div>
     </div>
+    <div class="adder" id="rowBlockFields" hidden>
+      <div class="fld">
+        <span class="fld-l">Laikas</span>
+        <div class="adder-row">
+          <input type="time" id="rowBStart" aria-label="Pradžia">
+          <input type="time" id="rowBEnd" aria-label="Pabaiga">
+        </div>
+      </div>
+      <p class="note" style="margin-top:0">Paros blokas kartojasi kasdien, tad laikas pasikeis visoms dienoms.</p>
+    </div>
+    <div class="msg bad" id="rowMsg"></div>
     <label class="qlabel" for="rowNote" style="margin-top:12px">Pastaba
       <span class="qhint">Kas vyksta, prie ko dirbi, ką reikia atsiminti</span>
     </label>
@@ -335,8 +346,8 @@
   </div>
 </dialog>
 
-<script>window.APP_BUILD = "20260917-164508";</script>
-<script src="app.js?v=20260917-164508"></script>
+<script>window.APP_BUILD = "20260917-165225";</script>
+<script src="app.js?v=20260917-165225"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {

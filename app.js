@@ -572,11 +572,9 @@
       chips = chips ? '<div class="tl-chips">' + chips + "</div>" : "";
 
       var icon = iconFor(row);
-      /* uzduoties laikas pats yra mygtukas: paspaudus atsidaro langas, kuriame ji keiti */
-      var timeCell = row.kind === "task"
-        ? '<button type="button" class="tl-time tl-time-btn" data-row="' + esc(row.id) +
-          '" aria-label="Keisti laiką">' + esc(row.start) + "</button>"
-        : '<div class="tl-time">' + esc(row.start) + "</div>";
+      /* laikas pats yra mygtukas: paspaudus atsidaro langas, kuriame ji keiti */
+      var timeCell = '<button type="button" class="tl-time tl-time-btn" data-row="' + esc(row.id) +
+        '" aria-label="Keisti laiką">' + esc(row.start) + "</button>";
       html += '<div class="tl-row ' + phase + (on ? " done" : "") + '">' +
         timeCell +
         '<div class="tl-rail"><span class="tl-dot c-' + icon + '">' + svgIcon(icon) + "</span></div>" +
@@ -920,9 +918,15 @@
     editingRow = row;
 
     document.getElementById("rowTitle").textContent = row.title;
+    document.getElementById("rowMsg").textContent = "";
     var isTask = row.kind === "task";
     document.getElementById("rowTaskFields").hidden = !isTask;
+    document.getElementById("rowBlockFields").hidden = isTask;
     document.getElementById("rowDelete").hidden = !isTask;
+    if (!isTask) {
+      document.getElementById("rowBStart").value = row.block.start;
+      document.getElementById("rowBEnd").value = row.block.end;
+    }
     if (isTask) {
       document.getElementById("rowText").value = row.task.text;
       document.getElementById("rowStart").value = row.task.start;
@@ -935,6 +939,7 @@
   document.getElementById("rowSave").addEventListener("click", function () {
     if (!editingRow) return;
     var id = editingRow.id;
+    var blockChanged = false;
     if (editingRow.kind === "task") {
       var task = taskById(id);
       if (task) {
@@ -943,11 +948,25 @@
         task.start = document.getElementById("rowStart").value || task.start;
         task.dur = +document.getElementById("rowDur").value || task.dur;
       }
+    } else {
+      var bs = document.getElementById("rowBStart").value;
+      var be = document.getElementById("rowBEnd").value;
+      if (bs && be && mins(be) <= mins(bs)) {
+        document.getElementById("rowMsg").textContent = "Pabaiga turi buti veliau nei pradzia.";
+        return;
+      }
+      for (var i = 0; i < state.blocks.length; i++) {
+        if (state.blocks[i].id !== id) continue;
+        if (bs && state.blocks[i].start !== bs) { state.blocks[i].start = bs; blockChanged = true; }
+        if (be && state.blocks[i].end !== be) { state.blocks[i].end = be; blockChanged = true; }
+      }
     }
     var note = document.getElementById("rowNote").value.trim();
     if (note) state.day.notes[id] = note; else delete state.day.notes[id];
     rowDlg.close();
-    save("day"); refresh();
+    save("day");
+    if (blockChanged) save("blocks");
+    refresh();
   });
 
   document.getElementById("rowDelete").addEventListener("click", function () {
