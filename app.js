@@ -559,7 +559,11 @@
       var noteLine = txt ? '<div class="tl-note">' + esc(txt) + "</div>" : "";
 
       var chips = "";
-      if (row.kind === "task") chips = '<span class="tl-chip task">užduotis</span>';
+      if (row.kind === "task") {
+        chips = '<span class="tl-chip task">užduotis</span>' +
+          '<button type="button" class="tl-del" data-del-task="' + esc(row.id) +
+          '" aria-label="Trinti užduotį">Trinti</button>';
+      }
       else if (row.block.kind === "work") chips = '<span class="tl-chip work">darbas</span>';
       else if (row.block.kind === "habit" && row.block.habit) {
         var h = habitById(row.block.habit);
@@ -814,6 +818,12 @@
     return null;
   }
 
+  function removeTask(id) {
+    state.day.tasks = state.day.tasks.filter(function (x) { return x.id !== id; });
+    delete state.day.notes[id];
+    save("day"); refresh();
+  }
+
   document.getElementById("timeline").addEventListener("click", function (e) {
     var tog = e.target.closest("[data-toggle-row]");
     if (tog) {
@@ -835,6 +845,23 @@
       save("day"); refresh();
       return;
     }
+    /* trynimas: pirmas paspaudimas paklausia, antras istrina. Taip uzduotis
+       nedingsta netycia, bet ir nereikia atskiro lango. */
+    var del = e.target.closest("[data-del-task]");
+    if (del) {
+      var did = del.getAttribute("data-del-task");
+      if (del.getAttribute("data-armed") === "1") { removeTask(did); return; }
+      var armed = document.querySelectorAll('[data-del-task][data-armed="1"]');
+      for (var a = 0; a < armed.length; a++) { armed[a].removeAttribute("data-armed"); armed[a].textContent = "Trinti"; }
+      del.setAttribute("data-armed", "1");
+      del.textContent = "Tikrai?";
+      setTimeout(function () {
+        if (!del.isConnected) return;
+        del.removeAttribute("data-armed");
+        del.textContent = "Trinti";
+      }, 4000);
+      return;
+    }
     var gap = e.target.closest("[data-add-at]");
     if (gap) {
       openTaskDialog(gap.getAttribute("data-add-at"), +gap.getAttribute("data-add-dur") || 30);
@@ -846,6 +873,7 @@
 
   document.getElementById("timeline").addEventListener("keydown", function (e) {
     if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target.closest("[data-del-task]")) return;
     var t = e.target.closest("[data-row]");
     if (!t) return;
     e.preventDefault();
@@ -897,10 +925,8 @@
   document.getElementById("rowDelete").addEventListener("click", function () {
     if (!editingRow) return;
     var id = editingRow.id;
-    state.day.tasks = state.day.tasks.filter(function (x) { return x.id !== id; });
-    delete state.day.notes[id];
     rowDlg.close();
-    save("day"); refresh();
+    removeTask(id);
   });
 
   document.getElementById("rowCancel").addEventListener("click", function () { rowDlg.close(); });

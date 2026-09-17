@@ -282,7 +282,13 @@ h2.section-title .st-note { font-family: var(--font-num); letter-spacing: .03em;
 .tl-note {
   font-size: 13px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere;
 }
-.tl-chips { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+.tl-chips { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; align-items: center; }
+.tl-del {
+  margin-left: auto; border: 1px solid var(--line); background: transparent; color: var(--muted);
+  border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 600;
+  font-family: var(--font-round); line-height: 1.45; flex: none;
+}
+.tl-del[data-armed="1"] { background: var(--signal); border-color: transparent; color: #fff; }
 .tl-chip {
   font-family: var(--font-num); font-size: 10px; font-weight: 600;
   letter-spacing: .05em; text-transform: uppercase; border-radius: 5px; padding: 3px 6px;
