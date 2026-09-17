@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=20260917-162531">
+<link rel="stylesheet" href="app.css?v=20260917-163217">
 </head>
 <body>
 <div class="shell">
@@ -261,6 +261,14 @@
     <button class="iconbtn" id="closeBlocks" aria-label="Uždaryti">✕</button>
   </div>
   <div class="dlg-body">
+    <h2 class="section-title" style="margin-top:0">Fonas</h2>
+    <div class="scale" id="themePick" role="group" aria-label="Fono spalva">
+      <button type="button" data-theme-set="auto" aria-pressed="true">Kaip telefone</button>
+      <button type="button" data-theme-set="light" aria-pressed="false">Šviesus</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Tamsus</button>
+    </div>
+
+    <h2 class="section-title">Paros blokai</h2>
     <div id="blockRows"></div>
     <div class="dlg-actions">
       <button class="btn ghost small" id="addBlock">+ Blokas</button>
@@ -314,8 +322,8 @@
   </div>
 </dialog>
 
-<script>window.APP_BUILD = "20260917-162531";</script>
-<script src="app.js?v=20260917-162531"></script>
+<script>window.APP_BUILD = "20260917-163217";</script>
+<script src="app.js?v=20260917-163217"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {

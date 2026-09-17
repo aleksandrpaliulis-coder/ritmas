@@ -14,6 +14,26 @@
   var WATER_GOAL = 8;
   var MOODS = ["prasta", "vidutinė", "gera", "puiki"];
 
+  /* ---------- fono spalva ----------
+     auto = kaip telefone, light = visada sviesus, dark = visada tamsus.
+     Uzdedam is karto, dar pries pirma piesima, kad nesublyksteltu ne ta tema. */
+  var THEME_KEY = LS + "theme";
+  function themeMode() {
+    try {
+      var v = localStorage.getItem(THEME_KEY);
+      return (v === "light" || v === "dark") ? v : "auto";
+    } catch (e) { return "auto"; }
+  }
+  function applyTheme(mode) {
+    if (mode === "light" || mode === "dark") document.documentElement.setAttribute("data-theme", mode);
+    else document.documentElement.removeAttribute("data-theme");
+    var btns = document.querySelectorAll("#themePick button");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-theme-set") === mode ? "true" : "false");
+    }
+  }
+  applyTheme(themeMode());
+
   var DEFAULT_BLOCKS = [
     { id: "b1", start: "06:30", end: "07:15", title: "Rytas, pusryčiai", kind: "life" },
     { id: "b2", start: "07:15", end: "08:00", title: "Kelias į darbą", kind: "life" },
@@ -1081,6 +1101,80 @@
     document.querySelector('.tab[data-tab="diena"]').click();
   });
 
+  /* ---------- saveika: savijauta ---------- */
+
+  document.getElementById("waterDots").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-water]");
+    if (!b) return;
+    var v = +b.getAttribute("data-water");
+    /* paspaudus ta pati taskeli antra karta, jis nusiima */
+    state.day.health.water = (state.day.health.water === v) ? v - 1 : v;
+    save("day"); refresh();
+  });
+
+  document.getElementById("moodScale").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-mood]");
+    if (!b) return;
+    var v = +b.getAttribute("data-mood");
+    state.day.health.mood = (state.day.health.mood === v) ? 0 : v;
+    save("day"); refresh();
+  });
+
+  function bumpSleep(delta) {
+    var v = (+state.day.health.sleep || 0) + delta;
+    if (v < 0) v = 0;
+    if (v > 14) v = 14;
+    state.day.health.sleep = Math.round(v * 2) / 2;
+    save("day"); refresh();
+  }
+  document.getElementById("sleepPlus").addEventListener("click", function () { bumpSleep(0.5); });
+  document.getElementById("sleepMinus").addEventListener("click", function () { bumpSleep(-0.5); });
+
+  /* ---------- naujos uzduoties langas ---------- */
+
+  var taskDlg = document.getElementById("taskDlg");
+
+  /* siulom artimiausia ketvirti, o ne siandienai, vidurdieni */
+  function suggestStart() {
+    if (!isToday()) return "12:00";
+    var m = Math.ceil(nowMins() / 15) * 15;
+    if (m > 23 * 60 + 45) m = 23 * 60 + 45;
+    return hhmm(m);
+  }
+
+  function openTaskDialog(start, dur) {
+    document.getElementById("taskText").value = "";
+    document.getElementById("taskStart").value = start || suggestStart();
+    document.getElementById("taskDur").value = String(dur || 30);
+    taskDlg.showModal();
+    setTimeout(function () { document.getElementById("taskText").focus(); }, 60);
+  }
+
+  function saveTask() {
+    var box = document.getElementById("taskText");
+    var txt = box.value.trim();
+    if (!txt) { box.focus(); return; }
+    state.day.tasks.push({
+      id: uid(),
+      text: txt,
+      start: document.getElementById("taskStart").value || suggestStart(),
+      dur: +document.getElementById("taskDur").value || 30,
+      done: false
+    });
+    taskDlg.close();
+    save("day");
+    /* jei uzduotis idedama ne is dienos kortos, pereinam i ja, kad matytusi rezultatas */
+    if (state.tab !== "diena") document.querySelector('.tab[data-tab="diena"]').click();
+    else refresh();
+  }
+
+  document.getElementById("fabAdd").addEventListener("click", function () { openTaskDialog(null, 30); });
+  document.getElementById("closeTask").addEventListener("click", function () { taskDlg.close(); });
+  document.getElementById("addTask").addEventListener("click", saveTask);
+  document.getElementById("taskText").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); saveTask(); }
+  });
+
   /* ---------- blokai ---------- */
 
   var blocksDlg = document.getElementById("blocksDlg");
@@ -1108,6 +1202,15 @@
     blocksDlg.showModal();
   });
   document.getElementById("closeBlocks").addEventListener("click", function () { blocksDlg.close(); });
+  document.getElementById("themePick").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-theme-set]");
+    if (!b) return;
+    var m = b.getAttribute("data-theme-set");
+    try {
+      if (m === "auto") localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, m);
+    } catch (err) { /* be atminties tema galios tik siai sesijai */ }
+    applyTheme(m);
+  });
   document.getElementById("addBlock").addEventListener("click", function () {
     bDraft.push({ id: uid(), start: "21:00", end: "22:00", title: "Naujas blokas", kind: "life" });
     renderBlockRows();
