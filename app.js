@@ -481,7 +481,8 @@
       ["diena", "iprociai", "apzvalga"].forEach(function (name) {
         document.getElementById("panel-" + name).hidden = (name !== state.tab);
       });
-      window.scrollTo(0, 0);
+      var scroller = document.querySelector("main");
+      if (scroller) scroller.scrollTop = 0;
     });
   });
 
