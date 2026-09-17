@@ -8,7 +8,9 @@
   var BUILD = window.APP_BUILD || "dev";
   var LS = "paros-ritmas:";
   var WEEKDAYS = ["Sekmadienis", "Pirmadienis", "Antradienis", "Trečiadienis", "Ketvirtadienis", "Penktadienis", "Šeštadienis"];
-  var WSHORT = ["P", "A", "T", "K", "P", "Š", "S"];
+  var WSHORT = ["Pr", "An", "Tr", "Kt", "Pn", "Št", "Sk"];
+  var MONTHS = ["sausio", "vasario", "kovo", "balandžio", "gegužės", "birželio",
+    "liepos", "rugpjūčio", "rugsėjo", "spalio", "lapkričio", "gruodžio"];
   var WATER_GOAL = 8;
   var MOODS = ["prasta", "vidutinė", "gera", "puiki"];
 
@@ -343,7 +345,75 @@
     return n ? n + " d. serija" : "serijos nėra";
   }
 
+
+  /* ---------- ikonos ----------
+     Kiekvienas ivykis juostoje gauna zenkla pagal savo pobudi. Jei blokas ikonos
+     neturi (pvz. issaugotas ankstesneje versijoje), ji parenkama pagal pavadinima. */
+
+  var ICONS = {
+    morning: '<path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6 6 4.6 4.6M19.4 4.6 18 6M6 18l-1.4 1.4M19.4 19.4 18 18"/><circle cx="12" cy="12" r="4"/>',
+    commute: '<path d="M5 17h14M6 17v2M18 17v2"/><path d="M4 13l1.6-4.4A2 2 0 0 1 7.5 7h9a2 2 0 0 1 1.9 1.6L20 13v4H4z"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/>',
+    work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
+    home: '<path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/>',
+    gym: '<path d="M4 9v6M20 9v6M7 6v12M17 6v12M7 12h10"/>',
+    read: '<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>',
+    evening: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+    task: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    dot: '<circle cx="12" cy="12" r="7"/>'
+  };
+
+  function iconFor(row) {
+    if (row.kind === "task") return "task";
+    var b = row.block;
+    if (b.icon && ICONS[b.icon]) return b.icon;
+    var n = String(b.title || "").toLowerCase();
+    if (b.kind === "work" || /darb|biur|ofis/.test(n)) return "work";
+    if (/ryt|pusryc|pusryč|keltis|kelias|kėlim/.test(n) && /ryt|pusryc|pusryč/.test(n)) return "morning";
+    if (/kelias|kelion|vaziav|važiav|transport/.test(n)) return "commute";
+    if (/nam|vakarien|pietus|pietūs|valg/.test(n)) return "home";
+    if (/sal|sport|treniruot|bėgim|begim|mankst|mankšt/.test(n)) return "gym";
+    if (/skait|knyg/.test(n)) return "read";
+    if (/vakar|mieg|ekran|atvesim|atvėsim|dus|duš/.test(n)) return "evening";
+    if (b.kind === "habit" && b.habit === "gym") return "gym";
+    if (b.kind === "habit" && b.habit === "read") return "read";
+    return "dot";
+  }
+
+  function svgIcon(name) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || ICONS.dot) + "</svg>";
+  }
+
+  function subFor(row) {
+    if (row.kind === "task") return "Užduotis";
+    var b = row.block;
+    if (b.kind === "work") return "Darbas";
+    if (b.kind === "habit" && b.habit) {
+      var h = habitById(b.habit);
+      if (h) return h.hint || h.name;
+    }
+    var span = mins(row.end) - mins(row.start);
+    return span >= 60 ? Math.round(span / 60 * 10) / 10 + " val" : span + " min";
+  }
+
+  function gapText(minsFree) {
+    if (minsFree >= 60) {
+      var h = Math.floor(minsFree / 60), m = minsFree % 60;
+      return h + " val" + (m ? " " + m + " min" : "") + " laisva";
+    }
+    return minsFree + " min laisva";
+  }
+
   /* ---------- piesimas ---------- */
+
+  /* taskeliai po savaites data: kiekvienas iprotis, atliktas ta diena */
+  function pipsFor(isoStr) {
+    var out = "";
+    for (var i = 0; i < state.habits.length && i < 4; i++) {
+      out += '<i class="' + (isHabitDone(state.habits[i].id, isoStr) ? "on" : "") + '"></i>';
+    }
+    return out;
+  }
 
   function renderHeader() {
     bump("renderHeader");
@@ -353,9 +423,11 @@
     if (isToday()) badge = "šiandien";
     else if (state.date === shiftDays(today(), -1)) badge = "vakar";
     else if (state.date === shiftDays(today(), 1)) badge = "rytoj";
-    document.getElementById("datestamp").innerHTML = esc(state.date) + (badge ? ' <span class="badge">' + badge + "</span>" : "");
+    document.getElementById("datestamp").innerHTML =
+      d.getDate() + " " + MONTHS[d.getMonth()] + ' <span class="yr">' + d.getFullYear() + "</span>" +
+      (badge ? ' <span class="badge">' + badge + "</span>" : "");
 
-    var pct = dayScore(state.date), circ = 2 * Math.PI * 23;
+    var pct = dayScore(state.date), circ = 2 * Math.PI * 19;
     var arc = document.getElementById("ringArc");
     arc.setAttribute("stroke-dasharray", circ.toFixed(1));
     arc.setAttribute("stroke-dashoffset", (circ * (1 - pct / 100)).toFixed(1));
@@ -364,13 +436,13 @@
     var ws = weekStart(state.date), html = "";
     for (var i = 0; i < 7; i++) {
       var isoI = shiftDays(ws, i);
-      var sc = dayScore(isoI);
-      var future = isoI > today();
+      var dI = parseIso(isoI);
       html += '<button class="wday" data-goto="' + isoI + '"' +
         ' aria-selected="' + (isoI === state.date ? "true" : "false") + '"' +
         ' aria-current="' + (isoI === today() ? "true" : "false") + '">' +
         '<span class="wl">' + WSHORT[i] + "</span>" +
-        '<span class="wdot' + (sc >= 60 ? " filled" : "") + '">' + (future ? "·" : (sc ? sc : "")) + "</span></button>";
+        '<span class="wdate">' + dI.getDate() + "</span>" +
+        '<span class="wpips">' + pipsFor(isoI) + "</span></button>";
     }
     document.getElementById("weekstrip").innerHTML = html;
 
@@ -385,17 +457,6 @@
     var rd = 0;
     for (j = 0; j < state.routines.length; j++) if (routineDone(state.routines[j].id, state.date)) rd++;
     document.getElementById("routinesDone").textContent = rd + " / " + state.routines.length + " užbaigta";
-  }
-
-  function tagFor(row) {
-    if (row.kind === "task") return '<span class="blk-tag tag-task">užduotis</span>';
-    var b = row.block;
-    if (b.kind === "work") return '<span class="blk-tag tag-work">darbas</span>';
-    if (b.kind === "habit" && b.habit) {
-      var h = habitById(b.habit);
-      if (h) return '<span class="blk-tag tag-' + esc(h.color || "gym") + '">' + esc(h.name) + "</span>";
-    }
-    return "";
   }
 
   function renderNow() {
@@ -451,20 +512,43 @@
     bump("renderTimeline");
     var wrap = document.getElementById("timeline");
     var rows = timelineRows();
-    if (!rows.length) { wrap.innerHTML = '<p class="empty">Blokų nėra. Susidėk juos per ⚙ viršuje.</p>'; return; }
-    var html = "";
-    for (var i = 0; i < rows.length; i++) {
+    if (!rows.length) {
+      wrap.innerHTML = '<p class="empty">Tuscia para. Susidek blokus per nustatymus virsuje.</p>';
+      return;
+    }
+
+    var now = nowMins(), html = "", nowShown = false, i;
+
+    for (i = 0; i < rows.length; i++) {
       var row = rows[i];
       var phase = phaseOf(row);
       var on = rowDone(row);
+
+      /* dabarties zyma iterpiama i savo vieta pagal laika */
+      if (isToday() && !nowShown && mins(row.start) > now) {
+        html += nowMarker(now);
+        nowShown = true;
+      }
+
       var prog = "";
       if (phase === "live") {
         var span = Math.max(1, mins(row.end) - mins(row.start));
-        var p = Math.min(100, Math.round(((nowMins() - mins(row.start)) / span) * 100));
-        prog = '<div class="blk-prog"><i style="width:' + p + '%"></i></div>';
+        var p = Math.min(100, Math.round(((now - mins(row.start)) / span) * 100));
+        prog = '<div class="tl-prog"><i style="width:' + p + '%"></i></div>';
       }
+
       var txt = state.day.notes[row.id];
-      var noteLine = txt ? '<div class="blk-note">' + esc(txt) + "</div>" : "";
+      var noteLine = txt ? '<div class="tl-note">' + esc(txt) + "</div>" : "";
+
+      var chips = "";
+      if (row.kind === "task") chips = '<span class="tl-chip task">užduotis</span>';
+      else if (row.block.kind === "work") chips = '<span class="tl-chip work">darbas</span>';
+      else if (row.block.kind === "habit" && row.block.habit) {
+        var h = habitById(row.block.habit);
+        if (h) chips = '<span class="tl-chip ' + esc(h.color || "gym") + '">' + esc(h.name) + "</span>";
+      }
+      chips = chips ? '<div class="tl-chips">' + chips + "</div>" : "";
+
       var editor = "";
       if (state.openNote === row.id) {
         editor = '<div class="note-edit">' +
@@ -474,14 +558,40 @@
           (row.kind === "task" ? '<button class="btn ghost small" data-del-task="' + esc(row.id) + '">Trinti</button>' : "") +
           "</div></div>";
       }
-      html += '<div class="blk ' + phase + (on ? " checked" : "") + (row.kind === "task" ? " task-row" : "") + '">' +
-        '<div class="blk-time">' + esc(row.start) + '<span class="blk-end">' + esc(row.end) + "</span></div>" +
-        '<div class="blk-body"><button class="blk-title" data-row="' + esc(row.id) + '">' +
-        esc(row.title) + tagFor(row) + "</button>" + noteLine + prog + editor + "</div>" +
-        '<button class="tick' + (on ? " on" : "") + '" data-toggle-row="' + esc(row.id) +
-        '" aria-label="Pažymėti atlikta" aria-pressed="' + (on ? "true" : "false") + '">✓</button></div>';
+
+      var icon = iconFor(row);
+      html += '<div class="tl-row ' + phase + (on ? " done" : "") + '">' +
+        '<div class="tl-time">' + esc(row.start) + "</div>" +
+        '<div class="tl-rail"><span class="tl-dot c-' + icon + '">' + svgIcon(icon) + "</span></div>" +
+        '<button class="tl-body" data-row="' + esc(row.id) + '">' +
+          '<div class="tl-sub">' + esc(subFor(row)) + "</div>" +
+          '<div class="tl-title">' + esc(row.title) + "</div>" +
+          noteLine + chips + prog + editor +
+        "</button>" +
+        '<button class="tl-check' + (on ? " on" : "") + '" data-toggle-row="' + esc(row.id) +
+        '" aria-label="Pažymėti atlikta" aria-pressed="' + (on ? "true" : "false") + '">✓</button>' +
+        "</div>";
+
+      /* tarpas iki kito ivykio: kiek laisva ir mygtukas uzduociai i ta vieta */
+      var next = rows[i + 1];
+      if (next) {
+        var free = mins(next.start) - mins(row.end);
+        if (free >= 15) {
+          html += '<div class="tl-gap"><span></span><div class="tl-gap-rail"></div>' +
+            '<div class="tl-gap-body"><span>' + gapText(free) + "</span>" +
+            '<button class="gap-add" data-add-at="' + esc(row.end) + '" data-add-dur="' +
+            Math.min(free, 120) + '">+ Užduotis</button></div></div>';
+        }
+      }
     }
+
+    if (isToday() && !nowShown) html += nowMarker(now);
     wrap.innerHTML = html;
+  }
+
+  function nowMarker(now) {
+    return '<div class="tl-now"><span class="tl-now-label">' + hhmm(now) + "</span>" +
+      '<span class="tl-now-line"></span></div>';
   }
 
   function renderHealth() {
@@ -717,6 +827,11 @@
       save("day"); refresh();
       return;
     }
+    var gap = e.target.closest("[data-add-at]");
+    if (gap) {
+      openTaskDialog(gap.getAttribute("data-add-at"), +gap.getAttribute("data-add-dur") || 30);
+      return;
+    }
     var t = e.target.closest("[data-row]");
     if (t) {
       var id = t.getAttribute("data-row");
@@ -748,18 +863,45 @@
     if (e.target.closest("[data-cancel-note]")) { state.openNote = null; renderTimeline(); }
   });
 
-  function addTask() {
-    var text = document.getElementById("taskText");
+  var taskDlg = document.getElementById("taskDlg");
+
+  function openTaskDialog(startAt, dur) {
     var startEl = document.getElementById("taskStart");
     var durEl = document.getElementById("taskDur");
+    startEl.value = startAt || hhmm(Math.ceil(nowMins() / 15) * 15);
+    if (dur) {
+      /* parenkam artimiausia pasiulyma, kuris telpa i laisva tarpa */
+      var best = durEl.options[0].value;
+      for (var i = 0; i < durEl.options.length; i++) {
+        if (+durEl.options[i].value <= dur) best = durEl.options[i].value;
+      }
+      durEl.value = best;
+    }
+    document.getElementById("taskText").value = "";
+    taskDlg.showModal();
+    setTimeout(function () { document.getElementById("taskText").focus(); }, 50);
+  }
+
+  function addTask() {
+    var text = document.getElementById("taskText");
     var val = text.value.trim();
     if (!val) { text.focus(); return; }
-    var start = startEl.value || hhmm(Math.ceil(nowMins() / 15) * 15);
-    state.day.tasks.push({ id: uid(), text: val, start: start, dur: +durEl.value || 30, done: false });
-    text.value = "";
+    state.day.tasks.push({
+      id: uid(), text: val,
+      start: document.getElementById("taskStart").value || hhmm(Math.ceil(nowMins() / 15) * 15),
+      dur: +document.getElementById("taskDur").value || 30,
+      done: false
+    });
+    taskDlg.close();
     save("day"); refresh();
   }
+
+  document.getElementById("fabAdd").addEventListener("click", function () {
+    if (state.tab !== "diena") document.querySelector('.tab[data-tab="diena"]').click();
+    openTaskDialog();
+  });
   document.getElementById("addTask").addEventListener("click", addTask);
+  document.getElementById("closeTask").addEventListener("click", function () { taskDlg.close(); });
   document.getElementById("taskText").addEventListener("keydown", function (e) {
     if (e.key === "Enter") { e.preventDefault(); addTask(); }
   });
