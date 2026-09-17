@@ -559,9 +559,16 @@ h2.section-title .st-note { font-family: "IBM Plex Mono", monospace; letter-spac
 }
 
 /* ---------- dialogai ---------- */
+/* Langas priristas prie ekrano, ne prie dokumento: kitaip slenkamame puslapyje
+   jis lieka ten, kur puslapio virsus, ir atrodo pabeges. */
 dialog {
-  border: 1px solid var(--line); border-radius: 16px; padding: 0; background: var(--surface); color: var(--ink);
-  width: min(560px, calc(100vw - 32px)); max-height: 82vh; max-height: 82dvh;
+  position: fixed; margin: 0;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  left: 50%; transform: translateX(-50%);
+  border: 1px solid var(--line); border-radius: 18px; padding: 0;
+  background: var(--surface); color: var(--ink);
+  width: min(560px, calc(100vw - 24px));
+  max-height: 84vh; max-height: 84dvh;
   overflow: auto; overscroll-behavior: contain; box-shadow: var(--shadow);
 }
 dialog::backdrop { background: rgba(10, 16, 22, .5); }
