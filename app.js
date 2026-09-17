@@ -1476,6 +1476,22 @@
   renderAll();
   connect();
 
+  /* Kol atidarytas langas, fonas uz jo neslenka. Klausom paties <dialog> "open"
+     pozymio, tad nereikia liesti kiekvienos atidarymo vietos. */
+  (function () {
+    var dlgs = Array.prototype.slice.call(document.querySelectorAll("dialog"));
+    function sync() {
+      var any = dlgs.some(function (d) { return d.open; });
+      document.documentElement.classList.toggle("locked", any);
+    }
+    if (window.MutationObserver) {
+      dlgs.forEach(function (d) {
+        new MutationObserver(sync).observe(d, { attributes: true, attributeFilter: ["open"] });
+      });
+    }
+  })();
+
+
   setInterval(function () {
     if (!isToday()) return;
     renderNow();
