@@ -572,8 +572,13 @@
       chips = chips ? '<div class="tl-chips">' + chips + "</div>" : "";
 
       var icon = iconFor(row);
+      /* uzduoties laikas pats yra mygtukas: paspaudus atsidaro langas, kuriame ji keiti */
+      var timeCell = row.kind === "task"
+        ? '<button type="button" class="tl-time tl-time-btn" data-row="' + esc(row.id) +
+          '" aria-label="Keisti laiką">' + esc(row.start) + "</button>"
+        : '<div class="tl-time">' + esc(row.start) + "</div>";
       html += '<div class="tl-row ' + phase + (on ? " done" : "") + '">' +
-        '<div class="tl-time">' + esc(row.start) + "</div>" +
+        timeCell +
         '<div class="tl-rail"><span class="tl-dot c-' + icon + '">' + svgIcon(icon) + "</span></div>" +
         '<div class="tl-body" role="button" tabindex="0" data-row="' + esc(row.id) + '">' +
           '<div class="tl-sub">' + esc(subFor(row)) + "</div>" +
@@ -885,6 +890,29 @@
   var rowDlg = document.getElementById("rowDlg");
   var editingRow = null;
 
+  /* jei uzduoties trukme nera is saraso (pvz. seniau irasyta 35 min), ideda ja i sarasa,
+     kad irasant nepasikeistu i 30 */
+  function setDur(selId, value) {
+    var el = document.getElementById(selId), v = String(+value || 30), i;
+    for (i = 0; i < el.options.length; i++) if (el.options[i].value === v) { el.value = v; return; }
+    var o = document.createElement("option");
+    o.value = v;
+    o.textContent = v + " min";
+    el.appendChild(o);
+    el.value = v;
+  }
+
+  /* greitas laiko pastumimas ketvirciu i abi puses */
+  function nudgeStart(delta) {
+    var box = document.getElementById("rowStart");
+    var m = mins(box.value || "12:00") + delta;
+    if (m < 0) m = 0;
+    if (m > 23 * 60 + 45) m = 23 * 60 + 45;
+    box.value = hhmm(m);
+  }
+  document.getElementById("rowEarlier").addEventListener("click", function () { nudgeStart(-15); });
+  document.getElementById("rowLater").addEventListener("click", function () { nudgeStart(15); });
+
   function openRow(id) {
     var rows = timelineRows(), row = null;
     for (var i = 0; i < rows.length; i++) if (rows[i].id === id) row = rows[i];
@@ -898,7 +926,7 @@
     if (isTask) {
       document.getElementById("rowText").value = row.task.text;
       document.getElementById("rowStart").value = row.task.start;
-      document.getElementById("rowDur").value = String(+row.task.dur || 30);
+      setDur("rowDur", row.task.dur);
     }
     document.getElementById("rowNote").value = state.day.notes[id] || "";
     rowDlg.showModal();

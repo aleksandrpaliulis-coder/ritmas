@@ -232,13 +232,26 @@ h2.section-title .st-note { font-family: var(--font-num); letter-spacing: .03em;
 .timeline { position: relative; }
 
 .tl-row {
-  display: grid; grid-template-columns: 46px 44px 1fr 30px; gap: 10px;
+  display: grid; grid-template-columns: 54px 44px 1fr 30px; gap: 10px;
   align-items: start; padding: 6px 0; position: relative;
 }
 .tl-time {
   font-family: var(--font-num); font-size: 12px; color: var(--muted);
   font-variant-numeric: tabular-nums; padding-top: 12px; text-align: right;
 }
+/* uzduoties laikas atrodo paspaudziamas, nes toks ir yra */
+.tl-time-btn {
+  margin-top: 8px; padding: 3px 0; width: 100%; border: 1px solid var(--line);
+  border-radius: 999px; background: var(--surface); color: var(--ink-2);
+  font-weight: 600; text-align: center; font-family: var(--font-num);
+}
+.tl-time-btn:hover { border-color: var(--accent); color: var(--accent); }
+.fld { display: flex; flex-direction: column; gap: 5px; }
+.fld-l { font-size: 12px; color: var(--muted); }
+.fld .adder-row input[type="time"] { flex: 1; width: auto; }
+.fld select { width: 100%; }
+.btn.nudge { flex: none; padding: 8px 10px; font-family: var(--font-num); }
+
 .tl-rail { position: relative; display: flex; justify-content: center; padding-top: 2px; }
 /* linija, jungianti ivykius */
 .tl-rail::before {
@@ -311,7 +324,7 @@ h2.section-title .st-note { font-family: var(--font-num); letter-spacing: .03em;
 
 /* laisvo laiko tarpas tarp ivykiu */
 .tl-gap {
-  display: grid; grid-template-columns: 46px 44px 1fr; gap: 10px; align-items: center;
+  display: grid; grid-template-columns: 54px 44px 1fr; gap: 10px; align-items: center;
   padding: 2px 0 6px;
 }
 .tl-gap-rail { position: relative; height: 100%; min-height: 34px; }
@@ -328,7 +341,7 @@ h2.section-title .st-note { font-family: var(--font-num); letter-spacing: .03em;
 
 /* dabarties zyma */
 .tl-now {
-  display: grid; grid-template-columns: 46px 1fr; gap: 10px; align-items: center; margin: 2px 0;
+  display: grid; grid-template-columns: 54px 1fr; gap: 10px; align-items: center; margin: 2px 0;
 }
 .tl-now-label {
   font-family: var(--font-num); font-size: 12px; font-weight: 600;

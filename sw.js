@@ -1,6 +1,6 @@
 /* Paros ritmas — service worker.
    Programele veikia be rysio: savi failai laikomi cache, sriftai atnaujinami fone. */
-var CACHE = "ritmas-20260917-163826";
+var CACHE = "ritmas-20260917-164508";
 var CORE = [
   "./",
   "./index.html",

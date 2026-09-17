@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=20260917-163826">
+<link rel="stylesheet" href="app.css?v=20260917-164508">
 </head>
 <body>
 <div class="shell">
@@ -185,8 +185,16 @@
       <div class="adder-row">
         <input type="text" id="rowText" placeholder="Ką darysi?" autocomplete="off">
       </div>
-      <div class="adder-row">
-        <input type="time" id="rowStart" aria-label="Pradžia">
+      <div class="fld">
+        <span class="fld-l">Pradžia</span>
+        <div class="adder-row">
+          <button class="btn ghost small nudge" type="button" id="rowEarlier" aria-label="15 minučių anksčiau">&minus;15</button>
+          <input type="time" id="rowStart" aria-label="Pradžia">
+          <button class="btn ghost small nudge" type="button" id="rowLater" aria-label="15 minučių vėliau">+15</button>
+        </div>
+      </div>
+      <div class="fld">
+        <span class="fld-l">Trukmė</span>
         <select id="rowDur" aria-label="Trukmė">
           <option value="15">15 min</option>
           <option value="30">30 min</option>
@@ -194,6 +202,7 @@
           <option value="60">1 val</option>
           <option value="90">1.5 val</option>
           <option value="120">2 val</option>
+          <option value="180">3 val</option>
         </select>
       </div>
     </div>
@@ -219,7 +228,9 @@
       <div class="adder-row">
         <input type="text" id="taskText" placeholder="Ką darysi?" autocomplete="off">
       </div>
-      <div class="adder-row">
+      <div class="fld">
+        <span class="fld-l">Pradžia ir trukmė</span>
+        <div class="adder-row">
         <input type="time" id="taskStart" aria-label="Pradžia">
         <select id="taskDur" aria-label="Trukmė">
           <option value="15">15 min</option>
@@ -228,7 +239,9 @@
           <option value="60">1 val</option>
           <option value="90">1.5 val</option>
           <option value="120">2 val</option>
+          <option value="180">3 val</option>
         </select>
+        </div>
       </div>
       <button class="btn wide" id="addTask">Įdėti į juostą</button>
     </div>
@@ -322,8 +335,8 @@
   </div>
 </dialog>
 
-<script>window.APP_BUILD = "20260917-163826";</script>
-<script src="app.js?v=20260917-163826"></script>
+<script>window.APP_BUILD = "20260917-164508";</script>
+<script src="app.js?v=20260917-164508"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
