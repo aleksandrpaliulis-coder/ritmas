@@ -346,6 +346,7 @@
   /* ---------- piesimas ---------- */
 
   function renderHeader() {
+    bump("renderHeader");
     var d = parseIso(state.date);
     document.getElementById("weekday").textContent = WEEKDAYS[d.getDay()];
     var badge = "";
@@ -447,6 +448,7 @@
   }
 
   function renderTimeline() {
+    bump("renderTimeline");
     var wrap = document.getElementById("timeline");
     var rows = timelineRows();
     if (!rows.length) { wrap.innerHTML = '<p class="empty">Blokų nėra. Susidėk juos per ⚙ viršuje.</p>'; return; }
@@ -652,6 +654,7 @@
   }
 
   function renderAll() {
+    bump("renderAll");
     renderHeader(); renderNow(); renderTimeline(); renderHealth();
     renderRoutines(); renderHabits(); renderOverview();
   }
@@ -1227,6 +1230,78 @@
     renderAll();
   });
 
+  /* ---------- diagnostika ----------
+     Skaiciuoja, kas ir kaip daznai vyksta ekrane. Artefakto versijoje santrauka
+     rasoma i duomenu baze, tad mirgejimo priezasti galima pamatyti is saliu,
+     o ne speti. Su `?debug=1` skaitikliai rodomi ir juostele apacioje. */
+
+  var diag = {
+    session: new Date().toISOString().slice(0, 16) + "-" + Math.random().toString(36).slice(2, 6),
+    started: new Date().toISOString(),
+    ua: navigator.userAgent,
+    standalone: !!(window.navigator.standalone ||
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)),
+    build: BUILD,
+    counts: {},
+    heights: [],
+    spikes: []
+  };
+  var debugOn = /[?&]debug=1/.test(window.location.search);
+
+  function bump(k) {
+    diag.counts[k] = (diag.counts[k] || 0) + 1;
+    var t = Math.floor(Date.now() / 1000);
+    if (!bump.sec || bump.sec !== t) { bump.sec = t; bump.n = 0; }
+    bump.n++;
+    /* daugiau nei 20 ivykiu per sekunde reiskia rata, o ne normalu naudojima */
+    if (bump.n === 21) diag.spikes.push({ at: new Date().toISOString(), key: k });
+    if (diag.spikes.length > 20) diag.spikes.shift();
+  }
+
+  function noteHeight(h) {
+    diag.heights.push({ t: Date.now() - diag.started_ms, h: h });
+    if (diag.heights.length > 40) diag.heights.shift();
+  }
+  diag.started_ms = Date.now();
+
+  ["focusin", "focusout"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      var el = e.target;
+      if (el && el.matches && el.matches("input, textarea, select")) bump(ev);
+    });
+  });
+  window.addEventListener("scroll", function () { bump("winScroll"); });
+
+  function renderDebugBar() {
+    if (!debugOn) return;
+    var bar = document.getElementById("debugBar");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "debugBar";
+      bar.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:99;background:#111;color:#0f0;" +
+        "font:10px/1.35 monospace;padding:6px 8px;white-space:pre-wrap;max-height:34vh;overflow:auto";
+      document.body.appendChild(bar);
+    }
+    var lines = [];
+    Object.keys(diag.counts).sort().forEach(function (k) { lines.push(k + "=" + diag.counts[k]); });
+    bar.textContent = "v" + BUILD + (diag.standalone ? " standalone" : " safari") + "\n" +
+      lines.join("  ") + "\nh: " + diag.heights.slice(-6).map(function (x) { return x.h; }).join(" ") +
+      (diag.spikes.length ? "\nRATAS: " + diag.spikes.length : "");
+  }
+
+  function sendDiag() {
+    if (!db) return;
+    var body = {
+      session: diag.session, started: diag.started, updated: new Date().toISOString(),
+      build: diag.build, ua: diag.ua, standalone: diag.standalone,
+      counts: diag.counts, heights: diag.heights.slice(-20), spikes: diag.spikes.slice(-10)
+    };
+    db.doc("diag/last").set(body)["catch"](function () {});
+  }
+
+  setInterval(function () { renderDebugBar(); sendDiag(); }, 5000);
+  setTimeout(renderDebugBar, 1000);
+
   /* ---------- ekrano remas ----------
      iOS klaviatura pastumia MATOMA langa, ne puslapi: remas prisegamas prie jo,
      tad antraste ir skirtukai lieka vietoje, o fokusuotas laukas matomas. */
@@ -1241,10 +1316,13 @@
        kovodavo su iOS, kuri tuo pat metu stumia langa prie fokusuoto lauko,
        ir tas abipusis stumdymasis ir buvo mirgejimas. */
     function apply() {
+      bump("apply");
       var h = Math.round(vv ? vv.height : window.innerHeight);
       if (h && Math.abs(h - lastH) >= 8) {
         lastH = h;
         root.style.setProperty("--app-h", h + "px");
+        noteHeight(h);
+        bump("heightSet");
       }
     }
 
@@ -1257,8 +1335,8 @@
     apply();
     /* tik `resize`: `scroll` yra butent tas ivykis, kuri iOS kelia stumdydama
        langa, ir atsakymas i ji sukuria begalini rata */
-    if (vv) vv.addEventListener("resize", schedule);
-    window.addEventListener("resize", schedule);
+    if (vv) vv.addEventListener("resize", function () { bump("vvResize"); schedule(); });
+    window.addEventListener("resize", function () { bump("winResize"); schedule(); });
     window.addEventListener("orientationchange", function () { setTimeout(apply, 250); });
   })();
 
@@ -1286,6 +1364,7 @@
         if (Date.now() - last < 120000) return;
         sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
       } catch (e) { /* be sessionStorage geriau nesikrauti is naujo */ return; }
+      bump("reload");
       window.location.reload();
     }
 
