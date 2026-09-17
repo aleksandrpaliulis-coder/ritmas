@@ -319,11 +319,13 @@ h2.section-title .st-note { font-family: "IBM Plex Mono", monospace; letter-spac
   border-radius: 50%; background: var(--accent);
 }
 
-.note-edit { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-.note-edit input[type="text"] {
-  width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
-}
 .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+#rowDlg textarea {
+  width: 100%; min-height: 84px; resize: vertical; padding: 10px; border: 1px solid var(--line);
+  border-radius: 9px; background: var(--surface-2); font-family: inherit; line-height: 1.45;
+}
+/* dialogo mygtukai visada telpa: eilėje po du, siaurame ekrane po vieną */
+.dlg-actions .btn { flex: 1 1 42%; min-width: 118px; }
 
 /* ---------- savijauta ---------- */
 .health {

@@ -54,7 +54,6 @@
     routines: DEFAULT_ROUTINES.map(clone),
     day: emptyDay(),
     tab: "diena",
-    openNote: null
   };
   var days = {};
   var db = null;
@@ -220,7 +219,6 @@
 
   function goDay(isoStr) {
     state.date = isoStr;
-    state.openNote = null;
     state.day = days[isoStr] ? normalize(days[isoStr]) : emptyDay();
     days[isoStr] = state.day;
     renderAll();
@@ -549,16 +547,6 @@
       }
       chips = chips ? '<div class="tl-chips">' + chips + "</div>" : "";
 
-      var editor = "";
-      if (state.openNote === row.id) {
-        editor = '<div class="note-edit">' +
-          '<input type="text" id="note-' + esc(row.id) + '" placeholder="Kas vyksta?" value="' + esc(txt || "") + '">' +
-          '<div class="row-actions"><button class="btn small" data-save-note="' + esc(row.id) + '">Įrašyti</button>' +
-          '<button class="btn ghost small" data-cancel-note="1">Atšaukti</button>' +
-          (row.kind === "task" ? '<button class="btn ghost small" data-del-task="' + esc(row.id) + '">Trinti</button>' : "") +
-          "</div></div>";
-      }
-
       var icon = iconFor(row);
       html += '<div class="tl-row ' + phase + (on ? " done" : "") + '">' +
         '<div class="tl-time">' + esc(row.start) + "</div>" +
@@ -566,7 +554,7 @@
         '<button class="tl-body" data-row="' + esc(row.id) + '">' +
           '<div class="tl-sub">' + esc(subFor(row)) + "</div>" +
           '<div class="tl-title">' + esc(row.title) + "</div>" +
-          noteLine + chips + prog + editor +
+          noteLine + chips + prog +
         "</button>" +
         '<button class="tl-check' + (on ? " on" : "") + '" data-toggle-row="' + esc(row.id) +
         '" aria-label="Pažymėti atlikta" aria-pressed="' + (on ? "true" : "false") + '">✓</button>' +
@@ -833,105 +821,62 @@
       return;
     }
     var t = e.target.closest("[data-row]");
-    if (t) {
-      var id = t.getAttribute("data-row");
-      state.openNote = (state.openNote === id) ? null : id;
-      renderTimeline();
-      var inp = document.getElementById("note-" + state.openNote);
-      if (inp) inp.focus();
-      return;
-    }
-    var sv = e.target.closest("[data-save-note]");
-    if (sv) {
-      var nid = sv.getAttribute("data-save-note");
-      var field = document.getElementById("note-" + nid);
-      var val = field ? field.value.trim() : "";
-      if (val) state.day.notes[nid] = val; else delete state.day.notes[nid];
-      state.openNote = null;
-      save("day"); refresh();
-      return;
-    }
-    var del = e.target.closest("[data-del-task]");
-    if (del) {
-      var did = del.getAttribute("data-del-task");
-      state.day.tasks = state.day.tasks.filter(function (x) { return x.id !== did; });
-      delete state.day.notes[did];
-      state.openNote = null;
-      save("day"); refresh();
-      return;
-    }
-    if (e.target.closest("[data-cancel-note]")) { state.openNote = null; renderTimeline(); }
+    if (t) openRow(t.getAttribute("data-row"));
   });
 
-  var taskDlg = document.getElementById("taskDlg");
+  /* ---------- eilutes langas ---------- */
 
-  function openTaskDialog(startAt, dur) {
-    var startEl = document.getElementById("taskStart");
-    var durEl = document.getElementById("taskDur");
-    startEl.value = startAt || hhmm(Math.ceil(nowMins() / 15) * 15);
-    if (dur) {
-      /* parenkam artimiausia pasiulyma, kuris telpa i laisva tarpa */
-      var best = durEl.options[0].value;
-      for (var i = 0; i < durEl.options.length; i++) {
-        if (+durEl.options[i].value <= dur) best = durEl.options[i].value;
+  var rowDlg = document.getElementById("rowDlg");
+  var editingRow = null;
+
+  function openRow(id) {
+    var rows = timelineRows(), row = null;
+    for (var i = 0; i < rows.length; i++) if (rows[i].id === id) row = rows[i];
+    if (!row) return;
+    editingRow = row;
+
+    document.getElementById("rowTitle").textContent = row.title;
+    var isTask = row.kind === "task";
+    document.getElementById("rowTaskFields").hidden = !isTask;
+    document.getElementById("rowDelete").hidden = !isTask;
+    if (isTask) {
+      document.getElementById("rowText").value = row.task.text;
+      document.getElementById("rowStart").value = row.task.start;
+      document.getElementById("rowDur").value = String(+row.task.dur || 30);
+    }
+    document.getElementById("rowNote").value = state.day.notes[id] || "";
+    rowDlg.showModal();
+  }
+
+  document.getElementById("rowSave").addEventListener("click", function () {
+    if (!editingRow) return;
+    var id = editingRow.id;
+    if (editingRow.kind === "task") {
+      var task = taskById(id);
+      if (task) {
+        var txt = document.getElementById("rowText").value.trim();
+        if (txt) task.text = txt;
+        task.start = document.getElementById("rowStart").value || task.start;
+        task.dur = +document.getElementById("rowDur").value || task.dur;
       }
-      durEl.value = best;
     }
-    document.getElementById("taskText").value = "";
-    taskDlg.showModal();
-    setTimeout(function () { document.getElementById("taskText").focus(); }, 50);
-  }
-
-  function addTask() {
-    var text = document.getElementById("taskText");
-    var val = text.value.trim();
-    if (!val) { text.focus(); return; }
-    state.day.tasks.push({
-      id: uid(), text: val,
-      start: document.getElementById("taskStart").value || hhmm(Math.ceil(nowMins() / 15) * 15),
-      dur: +document.getElementById("taskDur").value || 30,
-      done: false
-    });
-    taskDlg.close();
-    save("day"); refresh();
-  }
-
-  document.getElementById("fabAdd").addEventListener("click", function () {
-    if (state.tab !== "diena") document.querySelector('.tab[data-tab="diena"]').click();
-    openTaskDialog();
-  });
-  document.getElementById("addTask").addEventListener("click", addTask);
-  document.getElementById("closeTask").addEventListener("click", function () { taskDlg.close(); });
-  document.getElementById("taskText").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") { e.preventDefault(); addTask(); }
-  });
-
-  /* ---------- saveika: savijauta ---------- */
-
-  document.getElementById("waterDots").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-water]");
-    if (!b) return;
-    var v = +b.getAttribute("data-water");
-    state.day.health.water = (state.day.health.water === v) ? v - 1 : v;
-    save("day"); refresh();
-  });
-  document.getElementById("moodScale").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-mood]");
-    if (!b) return;
-    var v = +b.getAttribute("data-mood");
-    state.day.health.mood = (state.day.health.mood === v) ? 0 : v;
-    save("day"); refresh();
-  });
-  document.getElementById("sleepPlus").addEventListener("click", function () {
-    state.day.health.sleep = Math.min(14, (state.day.health.sleep || 6.5) + 0.5);
-    save("day"); refresh();
-  });
-  document.getElementById("sleepMinus").addEventListener("click", function () {
-    state.day.health.sleep = Math.max(0, (state.day.health.sleep || 7) - 0.5);
+    var note = document.getElementById("rowNote").value.trim();
+    if (note) state.day.notes[id] = note; else delete state.day.notes[id];
+    rowDlg.close();
     save("day"); refresh();
   });
 
-  /* ---------- saveika: iprociai ---------- */
+  document.getElementById("rowDelete").addEventListener("click", function () {
+    if (!editingRow) return;
+    var id = editingRow.id;
+    state.day.tasks = state.day.tasks.filter(function (x) { return x.id !== id; });
+    delete state.day.notes[id];
+    rowDlg.close();
+    save("day"); refresh();
+  });
+
+  document.getElementById("rowCancel").addEventListener("click", function () { rowDlg.close(); });
+  document.getElementById("closeRow").addEventListener("click", function () { rowDlg.close(); });
 
   document.getElementById("habitList").addEventListener("click", function (e) {
     var t = e.target.closest("[data-toggle-habit]");
@@ -1525,14 +1470,13 @@
 
   setInterval(function () {
     if (!isToday()) return;
-    var inTimeline = document.activeElement && document.activeElement.closest &&
-      document.activeElement.closest("#timeline");
     renderNow();
-    if (!inTimeline && !state.openNote) renderTimeline();
+    /* neperpiesiam, kol atidarytas langas: kitaip dingtu tai, kas jame rasoma */
+    if (!document.querySelector("dialog[open]")) renderTimeline();
   }, 30000);
 
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState !== "visible") return;
-    if (state.date !== today() && !state.openNote) goDay(today());
+    if (state.date !== today() && !document.querySelector("dialog[open]")) goDay(today());
   });
 })();

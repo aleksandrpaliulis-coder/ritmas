@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=20260917-160858">
+<link rel="stylesheet" href="app.css?v=20260917-161206">
 </head>
 <body>
 <div class="shell">
@@ -175,6 +175,40 @@
   </nav>
 </div>
 
+<dialog id="rowDlg">
+  <div class="dlg-head">
+    <h3 id="rowTitle">Įrašas</h3>
+    <button class="iconbtn" id="closeRow" aria-label="Uždaryti">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="adder" id="rowTaskFields" hidden>
+      <div class="adder-row">
+        <input type="text" id="rowText" placeholder="Ką darysi?" autocomplete="off">
+      </div>
+      <div class="adder-row">
+        <input type="time" id="rowStart" aria-label="Pradžia">
+        <select id="rowDur" aria-label="Trukmė">
+          <option value="15">15 min</option>
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">1 val</option>
+          <option value="90">1.5 val</option>
+          <option value="120">2 val</option>
+        </select>
+      </div>
+    </div>
+    <label class="qlabel" for="rowNote" style="margin-top:12px">Pastaba
+      <span class="qhint">Kas vyksta, prie ko dirbi, ką reikia atsiminti</span>
+    </label>
+    <textarea id="rowNote" placeholder="pvz. treniruotė: kojos"></textarea>
+    <div class="dlg-actions">
+      <button class="btn" id="rowSave">Įrašyti</button>
+      <button class="btn ghost" id="rowCancel">Atšaukti</button>
+      <button class="btn ghost" id="rowDelete" hidden>Trinti</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="taskDlg">
   <div class="dlg-head">
     <h3>Nauja užduotis</h3>
@@ -280,8 +314,8 @@
   </div>
 </dialog>
 
-<script>window.APP_BUILD = "20260917-160858";</script>
-<script src="app.js?v=20260917-160858"></script>
+<script>window.APP_BUILD = "20260917-161206";</script>
+<script src="app.js?v=20260917-161206"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
