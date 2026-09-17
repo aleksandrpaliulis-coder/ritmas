@@ -100,7 +100,7 @@
 
 /* Iprastas slenkantis dokumentas: jokiu prie ekrano prisegtu elementu, tad iOS
    klaviaturai nera ko stumdyti. Antraste ir skirtukai laikosi vietoje per sticky. */
-html { height: auto; overflow-x: hidden; }
+html { height: auto; overflow-x: clip; }
 body { min-height: 100%; width: 100%; }
 /* Pirstais vaizdo nebeprazoominsi ir nebenutempsi i sonus: leidziama tik vertikali
    slinktis. Be sito iOS priartintas vaizdas leidzia tempti turini uz ekrano ribu. */
@@ -114,7 +114,7 @@ body {
   margin: 0; background: var(--ground); color: var(--ink);
   font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased;
-  overflow-x: hidden; overscroll-behavior-y: none;
+  overflow-x: clip; overscroll-behavior-y: none;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -127,7 +127,7 @@ button { cursor: pointer; touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 .shell {
-  max-width: 620px; margin: 0 auto; width: 100%; overflow-x: hidden;
+  max-width: 620px; margin: 0 auto; width: 100%; overflow-x: clip;
   min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column;
 }
@@ -135,6 +135,8 @@ button { cursor: pointer; touch-action: manipulation; }
 /* ---------- antraste ---------- */
 .top {
   position: sticky; top: 0; flex: none; z-index: 20;
+  /* virsuje isjungiam permatoma foną, kad po ja slenkantis turinys nepersisviestu */
+  background-clip: padding-box;
   background: var(--ground); border-bottom: 1px solid var(--line);
   padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 10px;
 }
@@ -181,7 +183,7 @@ button { cursor: pointer; touch-action: manipulation; }
 .wday .wpips i.on { background: var(--accent); }
 
 main {
-  flex: 1 1 auto; padding: 18px 16px 28px;
+  flex: 1 1 auto; padding: 18px 16px calc(104px + env(safe-area-inset-bottom, 0px));
   background: var(--sheet); border-radius: 22px 22px 0 0;
   border-top: 1px solid var(--line-soft);
 }
@@ -535,11 +537,13 @@ h2.section-title .st-note { font-family: "IBM Plex Mono", monospace; letter-spac
 
 /* ---------- skirtukai ---------- */
 .tabs {
-  position: sticky; bottom: 0; z-index: 30; flex: none;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
   display: flex; justify-content: center; gap: 10px;
-  background: linear-gradient(to top, var(--ground) 62%, transparent);
+  background: linear-gradient(to top, var(--ground) 58%, transparent);
+  pointer-events: none;
 }
+.tabs-inner, .fab { pointer-events: auto; }
 .tabs-inner {
   display: flex; gap: 2px; flex: 1; min-width: 0; max-width: 480px;
   background: var(--surface); border: 1px solid var(--line-soft);
