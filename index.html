@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=20260917-132831">
+<link rel="stylesheet" href="app.css?v=20260917-134403">
 </head>
 <body>
 <div class="shell">
@@ -214,6 +214,7 @@
       <div class="dlg-actions" style="margin-top:0">
         <button class="btn ghost small" id="exportData">Padaryti kopiją</button>
         <button class="btn ghost small" id="importData">Įkelti kopiją</button>
+        <button class="btn ghost small" id="showDiag">Diagnostika</button>
       </div>
       <textarea id="backupBox" placeholder="Kopijos tekstas atsiras čia. Įkėlimui įklijuok anksčiau išsaugotą tekstą." aria-label="Atsarginės kopijos tekstas"></textarea>
       <div class="msg" id="backupMsg"></div>
@@ -253,8 +254,8 @@
   </div>
 </dialog>
 
-<script>window.APP_BUILD = "20260917-132831";</script>
-<script src="app.js?v=20260917-132831"></script>
+<script>window.APP_BUILD = "20260917-134403";</script>
+<script src="app.js?v=20260917-134403"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {

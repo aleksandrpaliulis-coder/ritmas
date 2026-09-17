@@ -1192,6 +1192,19 @@
     }
   }
 
+  document.getElementById("showDiag").addEventListener("click", function () {
+    var box = document.getElementById("backupBox");
+    var msg = document.getElementById("backupMsg");
+    box.value = JSON.stringify({
+      build: BUILD, standalone: diag.standalone, ua: diag.ua,
+      loadsLastMinute: diag.loadsLastMinute,
+      reloads: diag.reloads.slice(-15).map(function (t) { return new Date(t).toISOString().slice(11, 19); }),
+      counts: diag.counts, heights: diag.heights.slice(-10), spikes: diag.spikes.slice(-5)
+    }, null, 1);
+    msg.className = "msg";
+    msg.textContent = "Diagnostika lauke žemiau. Nusikopijuok ir atsiųsk.";
+  });
+
   document.getElementById("exportData").addEventListener("click", function () {
     var json = JSON.stringify(snapshot());
     document.getElementById("backupBox").value = json;
@@ -1248,6 +1261,14 @@
   };
   var debugOn = /[?&]debug=1/.test(window.location.search);
 
+  /* Perkrovimu istorija islieka tarp perkrovimu: jei programele krautusi rate,
+     cia matysis serija laiku su keliu sekundziu tarpais. */
+  diag.reloads = lsGet("reloads") || [];
+  diag.reloads.push(Date.now());
+  if (diag.reloads.length > 25) diag.reloads = diag.reloads.slice(-25);
+  lsSet("reloads", diag.reloads);
+  diag.loadsLastMinute = diag.reloads.filter(function (t) { return Date.now() - t < 60000; }).length;
+
   function bump(k) {
     diag.counts[k] = (diag.counts[k] || 0) + 1;
     var t = Math.floor(Date.now() / 1000);
@@ -1294,7 +1315,8 @@
     var body = {
       session: diag.session, started: diag.started, updated: new Date().toISOString(),
       build: diag.build, ua: diag.ua, standalone: diag.standalone,
-      counts: diag.counts, heights: diag.heights.slice(-20), spikes: diag.spikes.slice(-10)
+      counts: diag.counts, heights: diag.heights.slice(-20), spikes: diag.spikes.slice(-10),
+      reloads: diag.reloads.slice(-15), loadsLastMinute: diag.loadsLastMinute
     };
     db.doc("diag/last").set(body)["catch"](function () {});
   }
