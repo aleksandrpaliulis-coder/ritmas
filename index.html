@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Paros ritmas</title>
-<meta name="description" content="Paros tvarkaraštis, įpročių serijos ir produktyvumo apžvalga.">
+<meta name="description" content="Paros tvarkaraštis, rutinos, įpročių serijos ir savijauta.">
 <meta name="theme-color" content="#edf0f4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d131a" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app.css?v=20260917-120228">
 </head>
 <body>
 <div class="shell">
@@ -48,8 +48,57 @@
         <div class="now-sub" id="nowSub"></div>
         <div class="now-note" id="nowNote"></div>
       </div>
+
+      <h2 class="section-title">Savijauta <span class="st-note" id="healthNote"></span></h2>
+      <div class="health">
+        <div class="health-row">
+          <div class="health-label">Vanduo <span class="health-v" id="waterV">0 / 8</span></div>
+          <div class="dots" id="waterDots"></div>
+        </div>
+        <div class="health-row">
+          <div class="health-label">Nuotaika</div>
+          <div class="scale" id="moodScale">
+            <button type="button" data-mood="1" aria-pressed="false">prasta</button>
+            <button type="button" data-mood="2" aria-pressed="false">vidutinė</button>
+            <button type="button" data-mood="3" aria-pressed="false">gera</button>
+            <button type="button" data-mood="4" aria-pressed="false">puiki</button>
+          </div>
+        </div>
+        <div class="health-row">
+          <div class="health-label">Miegas <span class="health-v" id="sleepV">—</span></div>
+          <div class="stepper">
+            <button type="button" id="sleepMinus" aria-label="Mažiau miego">−</button>
+            <button type="button" id="sleepPlus" aria-label="Daugiau miego">+</button>
+          </div>
+        </div>
+      </div>
+
       <h2 class="section-title">Paros juosta <span class="st-note" id="blocksDone"></span></h2>
       <div class="timeline" id="timeline"></div>
+
+      <div class="adder">
+        <div class="adder-row">
+          <input type="text" id="taskText" placeholder="Nauja užduotis" autocomplete="off">
+        </div>
+        <div class="adder-row">
+          <input type="time" id="taskStart" aria-label="Pradžia">
+          <select id="taskDur" aria-label="Trukmė">
+            <option value="15">15 min</option>
+            <option value="30" selected>30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">1 val</option>
+            <option value="90">1.5 val</option>
+            <option value="120">2 val</option>
+          </select>
+          <button class="btn" id="addTask">Į juostą</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-rutinos" hidden>
+      <h2 class="section-title">Rutinos <span class="st-note" id="routinesDone"></span></h2>
+      <div id="routineList"></div>
+      <button class="btn ghost small wide" id="openRoutines">Tvarkyti rutinas</button>
     </section>
 
     <section class="panel" id="panel-iprociai" hidden>
@@ -68,6 +117,14 @@
 
       <h2 class="section-title">Savaitė <span class="st-note" id="weekRange"></span></h2>
       <div class="bars" id="weekBars"></div>
+
+      <h2 class="section-title">Savijauta, 7 dienos</h2>
+      <div class="tiles">
+        <div class="tile"><div class="tile-v" id="statWater">–</div><div class="tile-l">Vanduo, stiklinės per dieną</div></div>
+        <div class="tile"><div class="tile-v" id="statMood">–</div><div class="tile-l">Nuotaika iš 4</div></div>
+        <div class="tile"><div class="tile-v" id="statSleep">–</div><div class="tile-l">Miegas, valandos</div></div>
+      </div>
+      <div class="bars" id="sleepBars" style="margin-top:10px"></div>
 
       <h2 class="section-title">Penkios savaitės</h2>
       <div class="heat" id="heatHead"></div>
@@ -111,11 +168,32 @@
   <nav class="tabs">
     <div class="tabs-inner" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-tab="diena"><span class="ti" aria-hidden="true">◷</span>Diena</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="rutinos"><span class="ti" aria-hidden="true">↻</span>Rutinos</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="iprociai"><span class="ti" aria-hidden="true">✓</span>Įpročiai</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="apzvalga"><span class="ti" aria-hidden="true">▤</span>Apžvalga</button>
     </div>
   </nav>
 </div>
+
+<dialog id="focusDlg">
+  <div class="dlg-head">
+    <h3 id="focusName">Rutina</h3>
+    <button class="iconbtn" id="closeFocus" aria-label="Uždaryti">✕</button>
+  </div>
+  <div class="dlg-body focus-body">
+    <div class="focus-step" id="focusStep">—</div>
+    <div class="focus-meta" id="focusMeta"></div>
+    <div class="focus-timer" id="focusTimer">00:00</div>
+    <div class="focus-actions">
+      <button class="btn wide" id="focusDone">Atlikta, toliau</button>
+      <div class="row-actions">
+        <button class="btn ghost small" id="focusSkip">Praleisti</button>
+        <button class="btn ghost small" id="focusPause">Pauzė</button>
+      </div>
+    </div>
+    <div class="focus-list" id="focusList"></div>
+  </div>
+</dialog>
 
 <dialog id="blocksDlg">
   <div class="dlg-head">
@@ -129,7 +207,7 @@
       <button class="btn ghost small" id="resetBlocks">Grąžinti pradinį</button>
       <button class="btn small" id="saveBlocks">Išsaugoti</button>
     </div>
-    <p class="note" id="storageNote">Blokai galioja visoms dienoms. Pažymėjimai ir įrašai saugomi kiekvienai dienai atskirai.</p>
+    <p class="note" id="storageNote">Blokai galioja visoms dienoms. Pažymėjimai, užduotys ir savijauta saugomi kiekvienai dienai atskirai.</p>
 
     <h2 class="section-title">Atsarginė kopija</h2>
     <div class="backup">
@@ -140,6 +218,7 @@
       <textarea id="backupBox" placeholder="Kopijos tekstas atsiras čia. Įkėlimui įklijuok anksčiau išsaugotą tekstą." aria-label="Atsarginės kopijos tekstas"></textarea>
       <div class="msg" id="backupMsg"></div>
     </div>
+    <p class="note" id="buildNote"></p>
   </div>
 </dialog>
 
@@ -159,11 +238,36 @@
   </div>
 </dialog>
 
-<script src="app.js"></script>
+<dialog id="routinesDlg">
+  <div class="dlg-head">
+    <h3>Rutinos</h3>
+    <button class="iconbtn" id="closeRoutines" aria-label="Uždaryti">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div id="routineRows"></div>
+    <div class="dlg-actions">
+      <button class="btn ghost small" id="addRoutine">+ Rutina</button>
+      <button class="btn small" id="saveRoutines">Išsaugoti</button>
+    </div>
+    <p class="note">Žingsnio trukmė naudojama laikmačiui. Žingsnį galima susieti su įpročiu: tada pažymėjus žingsnį įprotis užsiskaito pats.</p>
+  </div>
+</dialog>
+
+<script>window.APP_BUILD = "20260917-120228";</script>
+<script src="app.js?v=20260917-120228"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("sw.js").catch(function () { /* be sw programele vis tiek veikia */ });
+      navigator.serviceWorker.register("sw.js").then(function (reg) {
+        // naujas service worker perima valdyma -> puslapis persikrauna su naujais failais
+        navigator.serviceWorker.addEventListener("controllerchange", function () {
+          if (!window.__ritmasReloading) { window.__ritmasReloading = true; window.location.reload(); }
+        });
+        setInterval(function () { reg.update(); }, 60000);
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible") reg.update();
+        });
+      }).catch(function () { /* be sw programele vis tiek veikia */ });
     });
   }
 </script>

@@ -1,6 +1,6 @@
 /* Paros ritmas — service worker.
    Programele veikia be rysio: savi failai laikomi cache, sriftai atnaujinami fone. */
-var CACHE = "ritmas-v3";
+var CACHE = "ritmas-20260917-120228";
 var CORE = [
   "./",
   "./index.html",
@@ -29,6 +29,12 @@ self.addEventListener("activate", function (e) {
 self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
+
+  /* versijos zyme visada is tinklo: pagal ja programele suzino apie atnaujinima */
+  if (req.url.indexOf("version.json") !== -1) {
+    e.respondWith(fetch(req)["catch"](function () { return new Response("{}", { headers: { "Content-Type": "application/json" } }); }));
+    return;
+  }
 
   /* naršymas: pirma tinklas, kad atnaujinimai ateitu; be rysio — is cache */
   if (req.mode === "navigate") {

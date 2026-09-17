@@ -19,6 +19,9 @@
   --c-sleep-soft: #dff0eb;
   --c-work: #4a5a6b;
   --c-work-soft: #e4e9ee;
+  --c-water: #2f7fa8;
+  --c-task: #8a6a2f;
+  --c-task-soft: #f0e7d6;
   --shadow: 0 1px 2px rgba(20, 29, 38, .06), 0 8px 24px -16px rgba(20, 29, 38, .3);
   --radius: 12px;
   color-scheme: light;
@@ -45,6 +48,9 @@
     --c-sleep-soft: #14312a;
     --c-work: #9fb0c1;
     --c-work-soft: #222c36;
+    --c-water: #63b2d8;
+    --c-task: #d6b264;
+    --c-task-soft: #332b19;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
     color-scheme: dark;
   }
@@ -70,6 +76,9 @@
   --c-sleep-soft: #14312a;
   --c-work: #9fb0c1;
   --c-work-soft: #222c36;
+  --c-water: #63b2d8;
+  --c-task: #d6b264;
+  --c-task-soft: #332b19;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
   color-scheme: dark;
 }
@@ -94,9 +103,13 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-/* --app-h nustato app.js pagal matoma ekrano dali (klaviatura, adreso juosta) */
+/* Remas prisegtas prie MATOMOS lango dalies: --app-h ir postumi nustato app.js is
+   visualViewport. iOS klaviatura pastumia butent matoma langa, ne puslapi, todel
+   vien auksto keitimo neuztenka. */
 .shell {
-  max-width: 620px; margin: 0 auto; height: var(--app-h, 100%);
+  position: fixed; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 620px; height: var(--app-h, 100%);
   display: flex; flex-direction: column;
 }
 
@@ -215,6 +228,120 @@ h2.section-title .st-note { font-family: "IBM Plex Mono", monospace; letter-spac
   width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
 }
 .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- savijauta ---------- */
+.health {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 12px;
+}
+.health-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.health-label { font-size: 13px; color: var(--muted); flex: none; min-width: 74px; }
+.health-v {
+  font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--ink-2);
+  font-variant-numeric: tabular-nums; margin-left: 4px;
+}
+.dots { display: flex; gap: 5px; flex: 1; }
+.dots button {
+  flex: 1; height: 26px; min-width: 18px; border-radius: 7px; border: 1.5px solid var(--line);
+  background: var(--surface-2); padding: 0;
+}
+.dots button.on { background: var(--c-water); border-color: var(--c-water); }
+.scale { display: flex; gap: 5px; flex: 1; }
+.scale button {
+  flex: 1; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px;
+  padding: 7px 2px; font-size: 11.5px; color: var(--muted);
+}
+.scale button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.stepper { display: flex; gap: 6px; flex: none; }
+.stepper button {
+  width: 38px; height: 32px; border: 1px solid var(--line); background: var(--surface-2);
+  border-radius: 8px; font-size: 16px; color: var(--ink-2); padding: 0;
+}
+
+/* ---------- uzduotys juostoje ---------- */
+.blk.task-row { border-style: dashed; }
+.blk.task-row .blk-title { font-weight: 400; }
+.tag-task { color: var(--c-task); background: var(--c-task-soft); }
+.adder {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px;
+}
+.adder-row { display: flex; gap: 8px; }
+.adder input[type="text"] {
+  flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line);
+  border-radius: 9px; background: var(--surface-2);
+}
+.adder input[type="time"], .adder select {
+  padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
+  font-size: 14px; min-width: 0;
+}
+.adder input[type="time"] { font-family: "IBM Plex Mono", monospace; flex: none; width: 104px; }
+.adder select { flex: 1; }
+
+/* ---------- rutinos ---------- */
+.routine {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow);
+}
+.routine-head { display: flex; align-items: center; gap: 12px; }
+.routine-name { font-family: Archivo, sans-serif; font-weight: 600; font-size: 16px; flex: 1; min-width: 0; }
+.routine-when {
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); display: block;
+  font-weight: 400; margin-top: 2px;
+}
+.routine-prog {
+  font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent); font-weight: 600; flex: none;
+}
+.rsteps { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; }
+.rstep {
+  display: flex; align-items: center; gap: 10px; background: var(--surface-2);
+  border: 1px solid var(--line-soft); border-radius: 9px; padding: 9px 10px; width: 100%; text-align: left;
+}
+.rstep.done { opacity: .55; }
+.rstep.done .rstep-name { text-decoration: line-through; }
+.rstep-tick {
+  flex: none; width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid var(--line);
+  display: grid; place-items: center; font-size: 12px; color: transparent; background: var(--surface);
+}
+.rstep.done .rstep-tick { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.rstep-name { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+.rstep-mins {
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); flex: none;
+}
+
+.focus-body { text-align: center; }
+.focus-step {
+  font-family: Archivo, sans-serif; font-weight: 700; font-size: 24px; line-height: 1.2;
+  margin: 8px 0 6px; text-wrap: balance;
+}
+.focus-meta { font-size: 13px; color: var(--muted); }
+.focus-timer {
+  font-family: "IBM Plex Mono", monospace; font-size: 48px; font-weight: 500;
+  font-variant-numeric: tabular-nums; margin: 18px 0; color: var(--accent); letter-spacing: -.02em;
+}
+.focus-timer.over { color: var(--signal); }
+.focus-actions { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.focus-actions .row-actions { justify-content: center; }
+.focus-list { margin-top: 18px; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.focus-list .rstep { background: transparent; }
+.focus-list .rstep.current { border-color: var(--accent); background: var(--accent-soft); }
+
+.rrow { display: grid; grid-template-columns: 1fr 74px 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.rrow input {
+  width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface-2); font-size: 13px;
+}
+.rrow input.mins { font-family: "IBM Plex Mono", monospace; }
+.rgroup {
+  border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 12px; margin-bottom: 10px;
+}
+.rgroup-head { display: grid; grid-template-columns: 1fr 74px 30px; gap: 6px; margin-bottom: 8px; }
+.rgroup-head input {
+  padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2);
+  font-family: Archivo, sans-serif; font-weight: 600; min-width: 0;
+}
+.rgroup-head input.when { font-family: "IBM Plex Mono", monospace; font-weight: 400; font-size: 13px; }
+.rgroup .del { background: none; border: 0; color: var(--muted); font-size: 18px; padding: 2px; }
 
 /* ---------- iprociai ---------- */
 .habit {
