@@ -256,7 +256,7 @@ h2.section-title .st-note { font-family: "IBM Plex Mono", monospace; letter-spac
 .tl-body {
   min-width: 0; background: var(--surface); border: 1px solid var(--line-soft);
   border-radius: var(--radius); padding: 10px 12px; text-align: left;
-  width: 100%; font: inherit; color: inherit;
+  width: 100%; font: inherit; color: inherit; cursor: pointer;
 }
 .tl-row.live .tl-body { border-color: var(--accent); box-shadow: var(--shadow); }
 .tl-sub {

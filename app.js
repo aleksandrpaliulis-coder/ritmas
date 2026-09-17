@@ -551,11 +551,11 @@
       html += '<div class="tl-row ' + phase + (on ? " done" : "") + '">' +
         '<div class="tl-time">' + esc(row.start) + "</div>" +
         '<div class="tl-rail"><span class="tl-dot c-' + icon + '">' + svgIcon(icon) + "</span></div>" +
-        '<button class="tl-body" data-row="' + esc(row.id) + '">' +
+        '<div class="tl-body" role="button" tabindex="0" data-row="' + esc(row.id) + '">' +
           '<div class="tl-sub">' + esc(subFor(row)) + "</div>" +
           '<div class="tl-title">' + esc(row.title) + "</div>" +
           noteLine + chips + prog +
-        "</button>" +
+        "</div>" +
         '<button class="tl-check' + (on ? " on" : "") + '" data-toggle-row="' + esc(row.id) +
         '" aria-label="Pažymėti atlikta" aria-pressed="' + (on ? "true" : "false") + '">✓</button>' +
         "</div>";
@@ -822,6 +822,14 @@
     }
     var t = e.target.closest("[data-row]");
     if (t) openRow(t.getAttribute("data-row"));
+  });
+
+  document.getElementById("timeline").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var t = e.target.closest("[data-row]");
+    if (!t) return;
+    e.preventDefault();
+    openRow(t.getAttribute("data-row"));
   });
 
   /* ---------- eilutes langas ---------- */
