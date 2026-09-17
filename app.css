@@ -83,8 +83,10 @@
   color-scheme: dark;
 }
 
-html, body { height: 100%; }
-html { height: 100dvh; }
+/* Iprastas slenkantis dokumentas: jokiu prie ekrano prisegtu elementu, tad iOS
+   klaviaturai nera ko stumdyti. Antraste ir skirtukai laikosi vietoje per sticky. */
+html { height: auto; }
+body { min-height: 100%; }
 /* saugios zonos tvarkomos pacioje antrasteje ir skirtuku juostoje, ne cia:
    kitaip klaviaturai atsidarius remo aukstis nebesutaptu su matoma ekrano dalimi */
 :root { padding-top: 0; padding-bottom: 0; }
@@ -94,8 +96,7 @@ body {
   margin: 0; background: var(--ground); color: var(--ink);
   font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased;
-  /* programeles remas: slenka tik vidurine sritis, antraste ir skirtukai stovi vietoje */
-  overflow: hidden; overscroll-behavior: none;
+  overflow-x: hidden; overscroll-behavior-y: none;
 }
 * { box-sizing: border-box; }
 button, input, textarea, select { font: inherit; color: inherit; }
@@ -103,19 +104,15 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-/* Remas prisegtas prie MATOMOS lango dalies: --app-h ir postumi nustato app.js is
-   visualViewport. iOS klaviatura pastumia butent matoma langa, ne puslapi, todel
-   vien auksto keitimo neuztenka. */
 .shell {
-  position: fixed; top: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 100%; max-width: 620px; height: var(--app-h, 100%);
+  max-width: 620px; margin: 0 auto;
+  min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column;
 }
 
 /* ---------- antraste ---------- */
 .top {
-  flex: none; z-index: 20;
+  position: sticky; top: 0; flex: none; z-index: 20;
   background: var(--ground); border-bottom: 1px solid var(--line);
   padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 10px;
 }
@@ -156,11 +153,7 @@ button { cursor: pointer; }
 .wday .wdot.filled { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .wday[aria-selected="true"] .wdot.filled { background: var(--accent); color: var(--on-accent); }
 
-main {
-  flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-  padding: 16px; padding-block-end: 28px;
-}
+main { flex: 1 1 auto; padding: 16px; padding-block-end: 28px; }
 
 h2.section-title {
   font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase;
@@ -441,7 +434,7 @@ h2.section-title .st-note { font-family: "IBM Plex Mono", monospace; letter-spac
 
 /* ---------- skirtukai ---------- */
 .tabs {
-  flex: none; z-index: 30; background: var(--surface);
+  position: sticky; bottom: 0; flex: none; z-index: 30; background: var(--surface);
   border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
   display: flex; justify-content: center;
 }
@@ -458,7 +451,6 @@ h2.section-title .st-note { font-family: "IBM Plex Mono", monospace; letter-spac
 dialog {
   border: 1px solid var(--line); border-radius: 16px; padding: 0; background: var(--surface); color: var(--ink);
   width: min(560px, calc(100vw - 32px)); max-height: 82vh; max-height: 82dvh;
-  max-height: calc(var(--app-h, 100dvh) * 0.85);
   overflow: auto; overscroll-behavior: contain; box-shadow: var(--shadow);
 }
 dialog::backdrop { background: rgba(10, 16, 22, .5); }

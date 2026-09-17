@@ -680,8 +680,7 @@
       ["diena", "rutinos", "iprociai", "apzvalga"].forEach(function (name) {
         document.getElementById("panel-" + name).hidden = (name !== state.tab);
       });
-      var scroller = document.querySelector("main");
-      if (scroller) scroller.scrollTop = 0;
+      window.scrollTo(0, 0);
     });
   });
 
@@ -1291,7 +1290,7 @@
       if (el && el.matches && el.matches("input, textarea, select")) bump(ev);
     });
   });
-  window.addEventListener("scroll", function () { bump("winScroll"); });
+  window.addEventListener("scroll", function () { bump("winScroll"); }, { passive: true });
 
   function renderDebugBar() {
     if (!debugOn) return;
@@ -1325,42 +1324,11 @@
   setTimeout(renderDebugBar, 1000);
 
   /* ---------- ekrano remas ----------
-     iOS klaviatura pastumia MATOMA langa, ne puslapi: remas prisegamas prie jo,
-     tad antraste ir skirtukai lieka vietoje, o fokusuotas laukas matomas. */
-
-  (function fitViewport() {
-    var root = document.documentElement;
-    var vv = window.visualViewport;
-    var lastH = 0, queued = false;
-
-    /* Cia liecia TIK remo auksti. Nesikisam i nieka, ka tvarko pati narsykle:
-       nei i lango slinkti, nei i remo pozicija. Buves `window.scrollTo(0, 0)`
-       kovodavo su iOS, kuri tuo pat metu stumia langa prie fokusuoto lauko,
-       ir tas abipusis stumdymasis ir buvo mirgejimas. */
-    function apply() {
-      bump("apply");
-      var h = Math.round(vv ? vv.height : window.innerHeight);
-      if (h && Math.abs(h - lastH) >= 8) {
-        lastH = h;
-        root.style.setProperty("--app-h", h + "px");
-        noteHeight(h);
-        bump("heightSet");
-      }
-    }
-
-    function schedule() {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(function () { queued = false; apply(); });
-    }
-
-    apply();
-    /* tik `resize`: `scroll` yra butent tas ivykis, kuri iOS kelia stumdydama
-       langa, ir atsakymas i ji sukuria begalini rata */
-    if (vv) vv.addEventListener("resize", function () { bump("vvResize"); schedule(); });
-    window.addEventListener("resize", function () { bump("winResize"); schedule(); });
-    window.addEventListener("orientationchange", function () { setTimeout(apply, 250); });
-  })();
+     Cia nebeliko nieko. Anksciau remo aukstis buvo imamas is visualViewport, bet
+     iOS klaviatura atsidaro slysdama ir per ta slydima praneša nauja auksti
+     kiekvienam kadrui: is to gimdavo 40 ir daugiau issidestymo perskaiciavimu per
+     viena klaviaturos atsidaryma, o tai ir buvo mirgejimas. Dabar issidestyma
+     tvarko tik CSS, o narsykle pati pastumia turini prie lauko, kuriame rasoma. */
 
   /* ---------- savaiminis atsinaujinimas ----------
      Kai serveryje atsiranda nauja versija, programele pasiima ja pati.
